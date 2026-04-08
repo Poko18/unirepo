@@ -1,0 +1,31 @@
+{
+  "name": "subtree-monorepo",
+  "version": "0.1.0",
+  "description": "CLI tool for creating and managing git-subtree monorepos — run your agents across repos",
+  "type": "module",
+  "bin": {
+    "subtree-monorepo": "./src/index.js"
+  },
+  "files": [
+    "src/"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "keywords": [
+    "git",
+    "subtree",
+    "monorepo",
+    "cli",
+    "developer-tools",
+    "agents"
+  ],
+  "author": "Poko18",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.3.0"
+  }
+}
