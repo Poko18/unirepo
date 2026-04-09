@@ -1,4 +1,4 @@
-import { git, getCurrentBranch, getSubtreePrefixes, getChangedSubtrees } from '../git.js';
+import { git, getCurrentBranch, getSubtreePrefixes, getChangedSubtrees, hasUncommittedChanges } from '../git.js';
 import { validateGitSubtree, validateInsideMonorepo } from '../validate.js';
 import * as ui from '../ui.js';
 
@@ -15,6 +15,14 @@ export async function runPush({ subtrees: requestedSubtrees, branch, dryRun }) {
   const currentBranch = getCurrentBranch(cwd);
   const pushBranch = branch || currentBranch;
 
+  // ── Check for uncommitted work ────────────────────────────────────────────
+  const hasUncommitted = hasUncommittedChanges(cwd);
+  if (hasUncommitted) {
+    ui.warning('You have uncommitted changes. Only committed work will be pushed upstream.');
+    ui.info('Commit your changes first, then run push again.');
+    ui.blank();
+  }
+
   // ── Determine which subtrees to push ─────────────────────────────────────
   let toPush;
 
@@ -24,7 +32,7 @@ export async function runPush({ subtrees: requestedSubtrees, branch, dryRun }) {
     const prefixNames = new Set(allPrefixes.map((p) => p.name));
     for (const name of requestedSubtrees) {
       if (!prefixNames.has(name)) {
-        throw new Error(`"${name}" is not a tracked subtree. Run "subtree-monorepo status" to see available subtrees.`);
+        throw new Error(`"${name}" is not a tracked subtree. Run "unirepo status" to see available subtrees.`);
       }
     }
     toPush = allPrefixes.filter((p) => requestedSubtrees.includes(p.name));
@@ -33,6 +41,9 @@ export async function runPush({ subtrees: requestedSubtrees, branch, dryRun }) {
     toPush = getChangedSubtrees(cwd);
     if (toPush.length === 0) {
       ui.info('No changed subtrees detected. Nothing to push.');
+      if (!hasUncommitted) {
+        ui.info('Make changes inside subtree directories and commit before pushing.');
+      }
       ui.blank();
       return;
     }

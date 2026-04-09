@@ -1,162 +1,210 @@
-# subtree-monorepo
+# unirepo
 
-A CLI for creating and managing git-subtree monorepos.
+[![npm version](https://img.shields.io/npm/v/unirepo)](https://www.npmjs.com/package/unirepo)
+[![CI](https://github.com/Poko18/unirepo/actions/workflows/ci.yml/badge.svg)](https://github.com/Poko18/unirepo/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Use it to pull multiple repositories into one working monorepo, make changes in subtree directories, and push only the changed subtrees back to their upstream repositories.
+**The workspace for cross-repo coding.**
 
-## What it does
+unirepo turns a set of GitHub repos into a single unified workspace. Edit code across any of them, commit once, and push updates back to their original repos — all in one branch.
 
-```bash
-npx subtree-monorepo init my-monorepo https://github.com/org/api.git https://github.com/org/web.git
+Built for the era of AI coding agents: give your agent one place to work, and let it refactor, ship features, and update shared APIs across your entire stack.
 
-cd my-monorepo
-npx subtree-monorepo branch feature-x
-npx subtree-monorepo status
-npx subtree-monorepo push --dry-run
-npx subtree-monorepo push
+
+## Why unirepo?
+
+**Before unirepo:**
+
+```
+~/work/api        ← clone, checkout branch, edit
+~/work/web        ← clone, checkout same branch, edit
+~/work/shared     ← clone, checkout same branch, edit
+# remember to push all three, open three PRs
 ```
 
-It helps you:
+**With unirepo:**
 
-- create a monorepo from multiple upstream repositories
-- add more repositories later as subtrees
-- inspect tracked subtrees, upstream branches, and changed directories
-- keep one branch name across the monorepo and pushed subtree branches
-- push only the subtrees that actually changed
+```
+~/work/my-workspace/
+├── api/      ← edit
+├── web/      ← edit
+└── shared/   ← edit
+# one commit, one push — all three repos updated
+```
+
+
+## Quick Start
+
+```bash
+npx unirepo init my-workspace \
+  https://github.com/org/api.git \
+  https://github.com/org/web.git
+```
+
+This creates:
+
+```
+my-workspace/
+├── api/          ← from github.com/org/api
+├── web/          ← from github.com/org/web
+├── AGENTS.md     ← workflow guide for humans and agents
+└── .gitignore
+```
+
+Then work across repos as if they were one:
+
+```bash
+cd my-workspace
+# edit files in api/ and web/
+git add . && git commit -m "feat: update shared types"
+unirepo push
+```
+
+That's it. Each subtree gets pushed to its upstream repo automatically.
+
 
 ## Install
 
-Install globally:
-
 ```bash
-npm install -g subtree-monorepo
+npm install -g unirepo
 ```
 
-Or run without installing:
+Or use without installing:
 
 ```bash
-npx subtree-monorepo --help
+npx unirepo <command>
 ```
 
-For local development in this repository:
-
-```bash
-node src/index.js --help
-```
-
-## Requirements
-
-- Node.js 18+
-- Git with `git subtree` available
 
 ## Commands
 
-| Command | What it does |
+| Command | Description |
 | --- | --- |
-| `init` | Create a new monorepo and import one or more upstream repositories |
-| `add` | Add another repository to an existing subtree monorepo |
-| `status` | Show tracked subtrees, upstream branches, current push branch, and changed subtrees |
-| `branch` | Create or inspect the branch name that will be reused for subtree pushes |
-| `push` | Push all changed subtrees, or selected subtrees, upstream |
+| `init <dir> <repo...>` | Create a new workspace from one or more repos |
+| `add <repo>` | Add another repo to the workspace |
+| `pull [subtree...]` | Pull upstream changes into tracked subtrees |
+| `status` | Show subtrees, branches, and what changed |
+| `branch [name]` | Create or show the current push branch |
+| `push [subtree...]` | Push changed subtrees upstream |
+| `version` | Show CLI version |
 
-## Usage
 
-### Init
+## Workflow
 
-Create a new monorepo and import one or more repositories.
-
-```bash
-subtree-monorepo init <dir> <repo-url> [repo-url...]
-```
-
-Options:
-
-- `--full-history` imports full git history instead of shallow squash imports
-
-Example:
+A typical session looks like this:
 
 ```bash
-subtree-monorepo init my-monorepo https://github.com/org/api.git https://github.com/org/web.git
+# 1. Create a branch for your work
+unirepo branch feature-auth
+
+# 2. Pull latest upstream changes
+unirepo pull
+
+# 3. Edit files across repos
+vim api/src/auth.js web/src/login.tsx
+
+# 4. Commit in the monorepo
+git add . && git commit -m "feat: add OAuth flow"
+
+# 5. Check what will be pushed
+unirepo status
+unirepo push --dry-run
+
+# 6. Push to upstream repos
+unirepo push
+
+# 7. Open one PR per upstream repo
 ```
 
-The generated monorepo includes:
+The branch name you create in the workspace is reused when pushing to each upstream repo.
 
-- `AGENTS.md` with workflow instructions for humans and coding agents
-- `.gitignore` with editor and OS ignores
 
-### Add
+## Command Reference
 
-Add another upstream repository to an existing subtree monorepo.
+### init
 
 ```bash
-subtree-monorepo add <repo-url> [--prefix <name>] [--full-history]
+unirepo init <dir> <repo-url> [repo-url...]
 ```
 
-Examples:
+Creates a new git repo at `<dir>`, imports each URL as a subtree, and generates an `AGENTS.md` workflow guide.
+
+| Flag | Effect |
+| --- | --- |
+| `--full-history` | Import full git history (default: squash) |
+
+### add
 
 ```bash
-subtree-monorepo add https://github.com/org/shared.git
-subtree-monorepo add https://github.com/org/shared.git --prefix shared-lib
+unirepo add <repo-url> [--prefix <name>] [--branch <name>]
 ```
 
-### Status
+Adds a repo to an existing workspace. The directory name defaults to the repo name.
 
-Show tracked subtrees, upstream branches, the current push branch, and which subtrees changed.
+| Flag | Effect |
+| --- | --- |
+| `--prefix <name>` | Override the subtree directory name |
+| `--branch <name>` | Import from a specific upstream branch |
+| `--full-history` | Import full git history |
+
+### pull
 
 ```bash
-subtree-monorepo status
-subtree-monorepo status --json
+unirepo pull [subtree...]
 ```
 
-Use this before pushing to confirm which subtrees will be affected.
+Pulls upstream changes. Without arguments, pulls all tracked subtrees.
 
-### Branch
+| Flag | Effect |
+| --- | --- |
+| `--branch <name>` | Pull a specific upstream branch |
+| `--full-history` | Pull full history instead of squash |
 
-Create a new branch in the monorepo. That branch name is then reused when pushing subtrees upstream.
+### status
 
 ```bash
-subtree-monorepo branch <name>
+unirepo status [--json]
 ```
 
-If you run `subtree-monorepo branch` with no name, it shows the current branch and push target state.
+Shows tracked subtrees, their upstream branches, the current push branch, and which subtrees have changes.
 
-### Push
-
-Push changed subtrees upstream.
+### branch
 
 ```bash
-subtree-monorepo push
-subtree-monorepo push --dry-run
-subtree-monorepo push <subtree>
-subtree-monorepo push --branch <name>
+unirepo branch [name]
 ```
 
-Without explicit subtree names, the command auto-detects changed subtrees.
+With a name: creates and switches to a new branch. Without: shows the current branch and push targets.
 
-## Recommended Workflow
+### push
 
-1. Create or switch to a branch for the work.
-2. Edit files inside one or more subtree directories.
-3. Commit in the monorepo.
-4. Check what changed with `subtree-monorepo status`.
-5. Run `subtree-monorepo push --dry-run`.
-6. Push changed subtrees with `subtree-monorepo push`.
-7. Open one PR per upstream subtree repository.
+```bash
+unirepo push [subtree...] [--dry-run]
+```
 
-## How it works
+Pushes changed subtrees upstream. Without arguments, auto-detects which subtrees have changes.
 
-1. `init` creates a fresh git repository, writes scaffold files, and imports each upstream repository as a subtree.
-2. `status` inspects remotes, top-level directories, and git history to determine tracked subtrees and changed prefixes.
-3. `branch` keeps the monorepo on one branch name that you can reuse when pushing each subtree upstream.
-4. `push` either auto-detects changed subtrees or uses the subtree names you provide, then runs `git subtree push` for each one.
+| Flag | Effect |
+| --- | --- |
+| `--branch <name>` | Override the upstream branch name |
+| `--dry-run` | Show what would run without executing |
 
-## Notes
 
-- The monorepo itself is not the deployment target.
-- Prefer separate commits per subtree unless the change is tightly coupled.
-- Keep subtree directory names and remote names aligned when possible.
-- Push only the subtrees that actually changed.
+## How It Works
+
+unirepo is a thin wrapper around [`git subtree`](https://git-scm.com/book/en/v2/Git-Tools-Advanced-Merging#_subtree_merge). Each repo you add becomes a directory in your workspace with a matching git remote. When you push, unirepo splits your commits per subtree and pushes each to its upstream.
+
+There's no lock-in — the workspace is a standard git repo. You can always fall back to raw `git subtree` commands.
+
+
+## Development
+
+```bash
+npm test        # run tests
+npm run build   # syntax check
+```
+
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).

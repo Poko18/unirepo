@@ -1,139 +1,121 @@
 export const AGENTS_MD = `# Monorepo Workflow
 
-## What This Repository Is
+## Model
 
 This repository is a git-subtree monorepo.
 
 - Each top-level subtree directory maps to an upstream repository.
-- Subtree directory names often match git remote names, but verify the mapping in the repo before pushing.
-- Work in this monorepo and push changes back out through subtree remotes.
+- Subtree directory names often match git remote names, but verify the mapping before manual subtree commands.
+- Run monorepo commands from the repository root.
 
-## Core Rules
+## Rules
 
 - Never use regular \`git push\` to publish the monorepo itself as a deployment target.
 - Work in a single monorepo branch and reuse that branch name when pushing subtree branches upstream.
 - Keep changes scoped to the subtree or subtrees you intend to update.
+- Edit files inside subtree directories, not in unrelated top-level folders.
 - Prefer separate commits per subtree unless the change is tightly coupled across repos.
 - Push only subtrees that actually changed.
 - Keep subtree directory, remote name, and pushed branch consistent.
 - Do not mix files from different subtrees in a subtree PR.
 
-## How To Work In This Monorepo
+## CLI
 
-- Run monorepo management commands from the repository root.
-- Edit files inside subtree directories, not in unrelated top-level folders.
-- Commit in the monorepo, then push the changed subtree or subtrees upstream.
-- Reuse the same branch name across the monorepo and each upstream subtree repo.
-
-If you are using the \`subtree-monorepo\` CLI, these are the main commands:
+Preferred when the \`unirepo\` CLI is available:
 
 \`\`\`bash
-subtree-monorepo status
-subtree-monorepo branch <branch>
-subtree-monorepo push --dry-run
-subtree-monorepo push
-subtree-monorepo add <repo-url>
+unirepo version
+unirepo status
+unirepo branch <branch>
+unirepo pull
+unirepo push --dry-run
+unirepo push
+unirepo add <repo-url> --branch <branch>
 \`\`\`
 
+- \`status\` shows tracked subtrees, upstream branches, the current push branch, and changed files.
+- \`branch <name>\` creates the local branch name you should reuse when pushing subtrees upstream.
+- \`pull\` updates one or more tracked subtrees from upstream before or during your work.
+- \`push --dry-run\` is the safe first step before a real push.
+- \`push\` without subtree names auto-detects changed subtrees. \`push <subtree>\` pushes one subtree.
+- \`add\` imports another repository as a subtree. Use \`--branch\` to import from a non-default upstream branch.
 
-\`status\` shows tracked subtrees, upstream branches, the current push branch, and which subtrees changed.
+## Workflow
 
-\`branch <name>\` creates a new local branch in the monorepo. That branch name becomes the branch you reuse when pushing subtrees upstream.
-
-\`push --dry-run\` is the safe first step before a real push. \`push\` without subtree names auto-detects changed subtrees. \`push <subtree>\` pushes only the named subtree.
-
-## Standard Workflow
-
-### 1. Create a branch
-
+1. Create or reuse one branch name for the work.
+CLI:
+\`\`\`bash
+unirepo branch <branch>
+\`\`\`
+Git:
 \`\`\`bash
 git checkout -b <branch>
 \`\`\`
 
-Use the same branch name for all subtree pushes from this monorepo.
-
-### 2. Make changes
-
-Edit files inside one or more top-level subtree directories.
-
-Examples:
-
-- \`<subtree-a>/...\`
-- \`<subtree-b>/...\`
-
-### 3. Commit
-
-Preferred, separate commits per subtree:
-
+2. Pull upstream updates when needed.
+CLI:
 \`\`\`bash
-git add <subtree-a>/
-git commit -m "feat(<subtree-a>): ..."
+unirepo pull
+\`\`\`
+Git:
+\`\`\`bash
+git subtree pull --prefix=<subtree> <remote-or-url> <branch> --squash
 \`\`\`
 
+3. Make changes inside one or more subtree directories.
+
+4. Commit in the monorepo. Prefer one commit per subtree unless the change is intentionally coupled.
 \`\`\`bash
-git add <subtree-b>/
-git commit -m "feat(<subtree-b>): ..."
+git add <subtree>/
+git commit -m "feat(<subtree>): ..."
 \`\`\`
 
-Combined commits across subtrees are allowed when the change is genuinely coupled.
-
-### 4. Determine changed subtrees
-
-Before pushing or suggesting push commands, identify which top-level subtrees actually changed.
-
-Quick overview:
-
+5. Inspect what changed before pushing.
+CLI:
+\`\`\`bash
+unirepo status
+\`\`\`
+Git:
 \`\`\`bash
 git diff --name-only HEAD
 \`\`\`
 
-Check one subtree at a time:
-
+6. Push only changed subtrees.
+CLI:
 \`\`\`bash
-git diff --quiet HEAD -- <subtree>
+unirepo push --dry-run
+unirepo push
+unirepo push <subtree>
+\`\`\`
+Git:
+\`\`\`bash
+git subtree push --prefix=<subtree> <remote-or-url> <branch>
 \`\`\`
 
-Push only changed subtrees. Do not suggest subtree pushes for untouched repos.
+## Raw Git Subtree
 
-### 5. Push changed subtrees
-
-Manual pattern:
+Use these when operating without the CLI:
 
 \`\`\`bash
-git diff --quiet HEAD -- <subtree> || git subtree push --prefix=<subtree> <remote> <branch>
+# Add a subtree
+git subtree add --prefix=libfoo https://github.com/example/libfoo.git main --squash
+
+# Pull updates from upstream
+git subtree pull --prefix=libfoo https://github.com/example/libfoo.git main --squash
+
+# Push local changes upstream
+git subtree push --prefix=libfoo https://github.com/example/libfoo.git <branch>
 \`\`\`
 
-If the subtree directory and remote name are the same, the push command usually looks like this:
+- If subtree directory and remote name match, the remote name often works in place of the full URL.
+- Reuse the same branch name across the monorepo and each upstream subtree repo.
 
-\`\`\`bash
-git subtree push --prefix=<subtree> <subtree> <branch>
-\`\`\`
-
-With the \`subtree-monorepo\` CLI, the equivalent is:
-
-\`\`\`bash
-subtree-monorepo push <subtree>
-\`\`\`
-
-## Pull Request Model
+## PRs
 
 - Open one PR per upstream subtree repo.
 - Use the same branch name in each upstream repo.
 - Target the default branch of the upstream repo unless that repo's workflow says otherwise.
 - Ensure each PR contains only changes from its own subtree.
-
-## Verify Before Pushing
-
-When the mapping is not obvious, inspect the repo instead of assuming.
-
-Useful commands:
-
-\`\`\`bash
-git remote -v
-git diff --name-only HEAD
-\`\`\`
-
-If needed, inspect the top-level directories in the monorepo to confirm subtree names.
 `;
 
 export const GITIGNORE = `.DS_Store

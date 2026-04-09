@@ -44,7 +44,7 @@ export function validateNoDuplicateNames(urls) {
 export function validateInsideMonorepo(cwd) {
   if (!isInsideWorkTree(cwd)) {
     throw new Error(
-      'Not inside a git repository. Run this command from a monorepo created with "subtree-monorepo init".'
+      'Not inside a git repository. Run this command from a monorepo created with "unirepo init".'
     );
   }
   const prefixes = getSubtreePrefixes(cwd);

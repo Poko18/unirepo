@@ -3,14 +3,20 @@
 import * as ui from './ui.js';
 import { runInit } from './commands/init.js';
 import { runAdd } from './commands/add.js';
+import { runPull } from './commands/pull.js';
 import { runStatus } from './commands/status.js';
 import { runPush } from './commands/push.js';
 import { runBranch } from './commands/branch.js';
+import { pathToFileURL } from 'node:url';
 
 // ── Argument Parsing ───────────────────────────────────────────────────────────
 
-function parseArgs(argv) {
+export function parseArgs(argv) {
   const args = argv.slice(2); // skip node + script
+
+  if (args[0] === '--version' || args[0] === '-v' || args[0] === 'version') {
+    return { command: 'version', positional: [], flags: {} };
+  }
 
   // Handle top-level --help / -h before command
   if (args.length === 0 || args[0] === '--help' || args[0] === '-h') {
@@ -48,7 +54,7 @@ function parseArgs(argv) {
 
 // ── Main ───────────────────────────────────────────────────────────────────────
 
-async function main() {
+export async function main() {
   const { command, positional, flags } = parseArgs(process.argv);
 
   if (!command || command === 'help' || flags.help) {
@@ -57,9 +63,14 @@ async function main() {
   }
 
   switch (command) {
+    case 'version': {
+      ui.version();
+      break;
+    }
+
     case 'init': {
       if (positional.length < 2) {
-        ui.error('Usage: subtree-monorepo init <dir> <repo-url> [repo-url...]');
+        ui.error('Usage: unirepo init <dir> <repo-url> [repo-url...]');
         process.exit(1);
       }
       const [dir, ...repos] = positional;
@@ -69,12 +80,22 @@ async function main() {
 
     case 'add': {
       if (positional.length < 1) {
-        ui.error('Usage: subtree-monorepo add <repo-url> [--prefix <name>] [--full-history]');
+        ui.error('Usage: unirepo add <repo-url> [--prefix <name>] [--branch <name>] [--full-history]');
         process.exit(1);
       }
       await runAdd({
         url: positional[0],
         prefix: flags.prefix,
+        branch: flags.branch,
+        fullHistory: flags.fullHistory || false,
+      });
+      break;
+    }
+
+    case 'pull': {
+      await runPull({
+        subtrees: positional.length > 0 ? positional : undefined,
+        branch: flags.branch,
         fullHistory: flags.fullHistory || false,
       });
       break;
@@ -107,7 +128,11 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  ui.error(err.message);
-  process.exit(1);
-});
+const isDirectRun = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isDirectRun) {
+  main().catch((err) => {
+    ui.error(err.message);
+    process.exit(1);
+  });
+}

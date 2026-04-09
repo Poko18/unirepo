@@ -1,10 +1,10 @@
 {
-  "name": "subtree-monorepo",
+  "name": "unirepo",
   "version": "0.1.0",
   "description": "CLI tool for creating and managing git-subtree monorepos — run your agents across repos",
   "type": "module",
   "bin": {
-    "subtree-monorepo": "./src/index.js"
+    "unirepo": "./src/index.js"
   },
   "files": [
     "src/"
@@ -13,7 +13,9 @@
     "node": ">=18"
   },
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "test": "node --test",
+    "build": "node --check src/*.js src/commands/*.js"
   },
   "keywords": [
     "git",
@@ -23,6 +25,14 @@
     "developer-tools",
     "agents"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Poko18/unirepo.git"
+  },
+  "homepage": "https://github.com/Poko18/unirepo#readme",
+  "bugs": {
+    "url": "https://github.com/Poko18/unirepo/issues"
+  },
   "author": "Poko18",
   "license": "MIT",
   "dependencies": {

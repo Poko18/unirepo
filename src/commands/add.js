@@ -2,7 +2,7 @@ import { git, detectDefaultBranch, extractRepoName } from '../git.js';
 import { validateGitSubtree, validateUrls, validateInsideMonorepo, validateNameAvailable, validateReachable } from '../validate.js';
 import * as ui from '../ui.js';
 
-export async function runAdd({ url, prefix, fullHistory }) {
+export async function runAdd({ url, prefix, branch, fullHistory }) {
   const cwd = process.cwd();
 
   // ── Preflight ────────────────────────────────────────────────────────────
@@ -21,9 +21,9 @@ export async function runAdd({ url, prefix, fullHistory }) {
   ui.success('All checks passed');
 
   // ── Detect branch ────────────────────────────────────────────────────────
-  ui.step(2, 4, `Detecting default branch for ${ui.info ? '' : ''}${name}...`);
-  const branch = detectDefaultBranch(url);
-  ui.repoDetail('Branch', branch);
+  ui.step(2, 4, branch ? `Using upstream branch for ${name}...` : `Detecting default branch for ${name}...`);
+  const upstreamBranch = branch || detectDefaultBranch(url);
+  ui.repoDetail('Branch', upstreamBranch);
 
   // ── Add remote + fetch ───────────────────────────────────────────────────
   ui.step(3, 4, 'Adding remote and fetching...');
@@ -31,12 +31,12 @@ export async function runAdd({ url, prefix, fullHistory }) {
 
   if (fullHistory) {
     ui.repoDetail('Mode', 'full history');
-    git(`fetch --no-tags "${name}" "${branch}"`, { cwd });
-    git(`subtree add --prefix="${name}" "${name}" "${branch}"`, { cwd });
+    git(`fetch --no-tags "${name}" "${upstreamBranch}"`, { cwd });
+    git(`subtree add --prefix="${name}" "${name}" "${upstreamBranch}"`, { cwd });
   } else {
     ui.repoDetail('Mode', 'shallow + squash');
-    git(`fetch --no-tags --depth 1 "${name}" "${branch}"`, { cwd });
-    git(`subtree add --squash --prefix="${name}" "${name}" "${branch}"`, { cwd });
+    git(`fetch --no-tags --depth 1 "${name}" "${upstreamBranch}"`, { cwd });
+    git(`subtree add --squash --prefix="${name}" "${name}" "${upstreamBranch}"`, { cwd });
   }
 
   // ── Done ─────────────────────────────────────────────────────────────────

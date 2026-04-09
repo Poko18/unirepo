@@ -18,7 +18,10 @@ export function git(args, opts = {}) {
     }).trim();
   } catch (err) {
     if (allowFailure) return '';
-    throw err;
+    // Surface git's stderr so users can see what actually went wrong
+    const stderr = (err.stderr || '').trim();
+    const msg = stderr || err.message;
+    throw new Error(msg);
   }
 }
 
@@ -222,6 +225,19 @@ export function getRemoteBranch(cwd, remoteName) {
     return slash >= 0 ? first.slice(slash + 1) : first;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Check if the working tree has uncommitted (staged or unstaged) changes.
+ */
+export function hasUncommittedChanges(cwd) {
+  try {
+    execSync('git diff --quiet', { cwd, stdio: ['pipe', 'pipe', 'pipe'] });
+    execSync('git diff --quiet --cached', { cwd, stdio: ['pipe', 'pipe', 'pipe'] });
+    return false;
+  } catch {
+    return true;
   }
 }
 

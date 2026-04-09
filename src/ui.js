@@ -1,4 +1,9 @@
+import { readFileSync } from 'node:fs';
 import chalk from 'chalk';
+
+const PACKAGE_JSON = JSON.parse(
+  readFileSync(new URL('../package.json', import.meta.url), 'utf8')
+);
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 
@@ -69,7 +74,7 @@ export function subtreeTable(subtrees, currentBranch) {
   blank();
 
   if (subtrees.length === 0) {
-    info('No subtrees found. Use "subtree-monorepo add" to add repos.');
+    info('No subtrees found. Use "unirepo add" to add repos.');
     blank();
     return;
   }
@@ -79,16 +84,15 @@ export function subtreeTable(subtrees, currentBranch) {
   const upstreamWidth = Math.max(10, ...subtrees.map((s) => (s.upstream || '').length)) + 2;
   const pushWidth = Math.max(12, currentBranch.length) + 2;
   const urlWidth = Math.max(10, ...subtrees.map((s) => s.url.length)) + 2;
+  const headerRow =
+    'Subtree'.padEnd(nameWidth) +
+    'Upstream'.padEnd(upstreamWidth) +
+    'Push branch'.padEnd(pushWidth) +
+    'Remote URL'.padEnd(urlWidth) +
+    'Changed';
 
-  console.log(
-    chalk.dim('  ' +
-      'Subtree'.padEnd(nameWidth) +
-      'Upstream'.padEnd(upstreamWidth) +
-      'Push branch'.padEnd(pushWidth) +
-      'Remote URL'.padEnd(urlWidth) +
-      'Changed')
-  );
-  console.log(chalk.dim('  ' + '─'.repeat(nameWidth + upstreamWidth + pushWidth + urlWidth + 10)));
+  console.log(chalk.dim(`  ${headerRow}`));
+  console.log(chalk.dim('  ' + '─'.repeat(headerRow.length)));
 
   for (const s of subtrees) {
     const changed = s.changed
@@ -121,13 +125,22 @@ export function pushSlow() {
   info('    Subtree push walks commit history — this may take a moment...');
 }
 
-export function initSummary(dir, count) {
+export function initSummary(dir, count, subtreeNames) {
   blank();
   console.log(chalk.dim('  ' + '─'.repeat(50)));
   console.log(`  ${ICON.package} ${chalk.green.bold('Monorepo created successfully!')}`);
   console.log(`  ${ICON.folder} Location: ${chalk.white(dir)}`);
   console.log(`  ${ICON.git} Subtrees: ${chalk.white(count)}`);
   blank();
+  if (subtreeNames && subtreeNames.length > 0) {
+    console.log(chalk.bold('  Next steps:'));
+    console.log(`    ${chalk.dim('$')} cd ${dir.includes(' ') ? `"${dir}"` : dir}`);
+    console.log(`    ${chalk.dim('$')} unirepo status`);
+    console.log(`    ${chalk.dim('# edit files in')} ${subtreeNames.map(n => chalk.cyan(n + '/')).join(', ')}`);
+    console.log(`    ${chalk.dim('$')} git add . && git commit -m "feat: ..."`);
+    console.log(`    ${chalk.dim('$')} unirepo push --dry-run`);
+    blank();
+  }
 }
 
 export function addSummary(name, url) {
@@ -136,28 +149,44 @@ export function addSummary(name, url) {
   blank();
 }
 
+export function version() {
+  console.log(`unirepo ${PACKAGE_JSON.version}`);
+}
+
 // ── Help / Usage ───────────────────────────────────────────────────────────────
 
 export function usage() {
   console.log(`
-${chalk.bold.cyan('subtree-monorepo')} — create and manage git-subtree monorepos
+${chalk.bold.cyan('unirepo')} — create and manage git-subtree monorepos
+${chalk.dim(`Version: ${PACKAGE_JSON.version}`)}
 
 ${chalk.bold('Usage:')}
-  subtree-monorepo ${chalk.green('<command>')} [options]
+  unirepo ${chalk.green('<command>')} [options]
 
 ${chalk.bold('Commands:')}
   ${chalk.green('init')} <dir> <repo-url...>    Create a new monorepo from repo URLs
   ${chalk.green('add')}  <repo-url>             Add a repo to the current monorepo
+  ${chalk.green('pull')} [subtree...]            Pull subtree updates from upstream
   ${chalk.green('status')}                      Show tracked subtrees and changes
   ${chalk.green('push')} [subtree...]            Push changed subtrees upstream
   ${chalk.green('branch')} [name]               Create a branch on all upstream repos
+  ${chalk.green('version')}                     Show the installed CLI version
+
+${chalk.bold('Global options:')}
+  --help, -h                  Show help
+  --version, -v               Show the installed CLI version
 
 ${chalk.bold('Init options:')}
   --full-history              Import full git history (default: shallow + squash)
 
 ${chalk.bold('Add options:')}
   --prefix <name>             Override the subtree directory name
+  --branch <name>             Import from a specific upstream branch
   --full-history              Import full git history
+
+${chalk.bold('Pull options:')}
+  --branch <name>             Pull a specific upstream branch for all selected subtrees
+  --full-history              Pull full history instead of squash mode
 
 ${chalk.bold('Status options:')}
   --json                      Output machine-readable JSON
@@ -168,19 +197,22 @@ ${chalk.bold('Push options:')}
 
 ${chalk.bold('Examples:')}
   ${chalk.dim('# Create monorepo from multiple repos')}
-  npx subtree-monorepo init my-monorepo https://github.com/org/api.git https://github.com/org/web.git
+  npx unirepo init my-monorepo https://github.com/org/api.git https://github.com/org/web.git
 
   ${chalk.dim('# Add another repo later')}
   cd my-monorepo
-  npx subtree-monorepo add https://github.com/org/shared.git
+  npx unirepo add https://github.com/org/shared.git --branch main
+
+  ${chalk.dim('# Pull upstream updates before working')}
+  npx unirepo pull
 
   ${chalk.dim('# Check status')}
-  npx subtree-monorepo status
+  npx unirepo status
 
   ${chalk.dim('# Create a branch (used as target when pushing all subtrees)')}
-  npx subtree-monorepo branch feature-x
+  npx unirepo branch feature-x
 
   ${chalk.dim('# Push changes upstream')}
-  npx subtree-monorepo push --dry-run
+  npx unirepo push --dry-run
 `);
 }

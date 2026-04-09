@@ -21,7 +21,7 @@ export async function runBranch({ name }) {
       ui.info(`  ${s.name}  upstream: ${upstream}  push target: ${currentBranch}`);
     }
     ui.blank();
-    ui.info('Use "subtree-monorepo branch <name>" to switch all subtrees to a new branch.');
+    ui.info('Use "unirepo branch <name>" to switch all subtrees to a new branch.');
     ui.blank();
     return;
   }
@@ -48,7 +48,7 @@ export async function runBranch({ name }) {
   ui.info('Next steps:');
   ui.info('  1. Make changes in subtree directories');
   ui.info('  2. Commit in the monorepo');
-  ui.info(`  3. subtree-monorepo push`);
+  ui.info(`  3. unirepo push`);
   ui.info('  4. Open one PR per upstream repo');
   ui.blank();
 }
