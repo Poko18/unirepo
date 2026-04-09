@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { mkdtempSync, symlinkSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const CLI_PATH = fileURLToPath(new URL('../src/index.js', import.meta.url));
 
@@ -46,4 +49,23 @@ test('cli add command without repo url fails with code 1 and usage', () => {
   const result = runCli(['add']);
   assert.equal(result.status, 1);
   assert.match(result.output, /Usage: unirepo add <repo-url>/);
+});
+
+// Regression test for the symlink bug: when installed globally via npm,
+// the CLI is invoked through a symlink (e.g. /usr/local/bin/unirepo).
+// The isDirectRun check must resolve symlinks, otherwise main() never runs
+// and the CLI silently exits with no output.
+test('cli works when invoked via a symlink (npm global install scenario)', () => {
+  const tmp = mkdtempSync(join(tmpdir(), 'unirepo-symlink-'));
+  const linkPath = join(tmp, 'unirepo-link');
+  try {
+    symlinkSync(CLI_PATH, linkPath);
+    const result = spawnSync(process.execPath, [linkPath, '--version'], {
+      encoding: 'utf8',
+    });
+    assert.equal(result.status, 0);
+    assert.match(`${result.stdout || ''}${result.stderr || ''}`, /unirepo\s+\d+\.\d+\.\d+/);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
 });

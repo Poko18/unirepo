@@ -35,3 +35,10 @@ jobs:
 
       - name: Verify CLI runs
         run: node src/index.js --version
+
+      - name: Verify packaged CLI works via global install
+        run: |
+          npm pack
+          npm install -g ./unirepo-*.tgz
+          unirepo --version
+          unirepo --help

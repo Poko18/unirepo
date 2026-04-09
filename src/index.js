@@ -8,6 +8,7 @@ import { runStatus } from './commands/status.js';
 import { runPush } from './commands/push.js';
 import { runBranch } from './commands/branch.js';
 import { pathToFileURL } from 'node:url';
+import { realpathSync } from 'node:fs';
 
 // ── Argument Parsing ───────────────────────────────────────────────────────────
 
@@ -128,7 +129,18 @@ export async function main() {
   }
 }
 
-const isDirectRun = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+// Resolve symlinks so this works when invoked via an npm-installed bin symlink
+// (e.g. /usr/local/bin/unirepo → /usr/local/lib/node_modules/unirepo/src/index.js).
+function isDirectRunCheck() {
+  if (!process.argv[1]) return false;
+  try {
+    const realArgv = realpathSync(process.argv[1]);
+    return import.meta.url === pathToFileURL(realArgv).href;
+  } catch {
+    return false;
+  }
+}
+const isDirectRun = isDirectRunCheck();
 
 if (isDirectRun) {
   main().catch((err) => {
