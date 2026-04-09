@@ -2,6 +2,7 @@
 
 import * as ui from './ui.js';
 import { runInit } from './commands/init.js';
+import { runInteractiveInit, CancelError } from './interactive.js';
 import { runAdd } from './commands/add.js';
 import { runPull } from './commands/pull.js';
 import { runStatus } from './commands/status.js';
@@ -70,8 +71,15 @@ export async function main() {
     }
 
     case 'init': {
+      if (positional.length === 0) {
+        // No args → interactive setup flow
+        const result = await runInteractiveInit();
+        await runInit(result);
+        break;
+      }
       if (positional.length < 2) {
         ui.error('Usage: unirepo init <dir> <repo-url> [repo-url...]');
+        ui.info('Or run "unirepo init" with no arguments for interactive setup.');
         process.exit(1);
       }
       const [dir, ...repos] = positional;
@@ -144,6 +152,11 @@ const isDirectRun = isDirectRunCheck();
 
 if (isDirectRun) {
   main().catch((err) => {
+    if (err instanceof CancelError) {
+      ui.blank();
+      ui.info(err.message);
+      process.exit(0);
+    }
     ui.error(err.message);
     process.exit(1);
   });

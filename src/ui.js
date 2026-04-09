@@ -29,6 +29,14 @@ export function header(text) {
   console.log(chalk.dim('  ' + '─'.repeat(50)));
 }
 
+export function interactiveHeader() {
+  console.log();
+  console.log(chalk.bold.cyan(`  ${ICON.git}  Unirepo — Interactive setup`));
+  console.log(chalk.dim('  ' + '─'.repeat(50)));
+  console.log(chalk.dim('  Pick repos to bundle into a new subtree monorepo.'));
+  console.log();
+}
+
 export function step(n, total, text) {
   const prefix = chalk.dim(`  [${n}/${total}]`);
   console.log(`${prefix} ${text}`);
