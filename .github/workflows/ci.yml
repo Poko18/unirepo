@@ -39,6 +39,6 @@ jobs:
       - name: Verify packaged CLI works via global install
         run: |
           npm pack
-          npm install -g ./unirepo-*.tgz
+          npm install -g ./unirepo-cli-*.tgz
           unirepo --version
           unirepo --help

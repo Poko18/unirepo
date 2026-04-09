@@ -1,6 +1,6 @@
 # unirepo
 
-[![npm version](https://img.shields.io/npm/v/unirepo)](https://www.npmjs.com/package/unirepo)
+[![npm version](https://img.shields.io/npm/v/unirepo-cli)](https://www.npmjs.com/package/unirepo-cli)
 [![CI](https://github.com/Poko18/unirepo/actions/workflows/ci.yml/badge.svg)](https://github.com/Poko18/unirepo/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -36,7 +36,7 @@ Built for the era of AI coding agents: give your agent one place to work, and le
 ## Quick Start
 
 ```bash
-npx unirepo init my-workspace \
+npx unirepo-cli init my-workspace \
   https://github.com/org/api.git \
   https://github.com/org/web.git
 ```
@@ -66,13 +66,19 @@ That's it. Each subtree gets pushed to its upstream repo automatically.
 ## Install
 
 ```bash
-npm install -g unirepo
+npm install -g unirepo-cli
+```
+
+Once installed, the command is just `unirepo`:
+
+```bash
+unirepo --version
 ```
 
 Or use without installing:
 
 ```bash
-npx unirepo <command>
+npx unirepo-cli <command>
 ```
 
 
