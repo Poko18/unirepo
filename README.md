@@ -4,63 +4,89 @@
 [![CI](https://github.com/Poko18/unirepo/actions/workflows/ci.yml/badge.svg)](https://github.com/Poko18/unirepo/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**The workspace for cross-repo coding.**
+### One workspace to refactor your whole stack in one go
 
-unirepo turns a set of GitHub repos into a single unified workspace. Edit code across any of them, commit once, and push updates back to their original repos — all in one branch.
+Work across multiple repos like they’re one. Unirepo turns multiple GitHub repositories into a single unified workspace. Edit backend, frontend, and shared code in one tree, commit from one place, and push changes back to each repo using the same branch.
 
-Built for the era of AI coding agents: give your agent one place to work, and let it refactor, ship features, and update shared APIs across your entire stack.
+### Built for AI coding agents
 
+AI agents need full context to make correct changes—not one repo at a time. Unirepo gives them a single workspace to refactor your entire stack, keep changes consistent, and push updates back to each repo.
 
-## Why unirepo?
+### Example task
 
-**Before unirepo:**
+You need to update:
 
-```
-~/work/api        ← clone, checkout branch, edit
-~/work/web        ← clone, checkout same branch, edit
-~/work/shared     ← clone, checkout same branch, edit
-# remember to push all three, open three PRs
-```
+- `api/` for a new endpoint
+- `web/` for the UI
+- `shared/` for shared types
 
-**With unirepo:**
+<table>
+<tr>
+<td width="50%" valign="top">
 
-```
-~/work/my-workspace/
-├── api/      ← edit
-├── web/      ← edit
-└── shared/   ← edit
-# one commit, one push — all three repos updated
-```
-
-
-## Quick Start
+**Without `unirepo`**
 
 ```bash
-npx unirepo-cli init my-workspace \
-  https://github.com/org/api.git \
-  https://github.com/org/web.git
+# clone and branch in each repo
+git clone git@github.com:org/api.git
+git clone git@github.com:org/web.git
+git clone git@github.com:org/shared.git
+
+cd api && git checkout -b feature-auth
+cd ../web && git checkout -b feature-auth
+cd ../shared && git checkout -b feature-auth
+
+# edit in 3 separate checkouts
+
+# commit in each repo
+cd ../api && git add . && git commit -m "feat: add auth"
+cd ../web && git add . && git commit -m "feat: add auth UI"
+cd ../shared && git add . && git commit -m "feat: add auth types"
+
+# push from each repo
+cd ../api && git push -u origin feature-auth
+cd ../web && git push -u origin feature-auth
+cd ../shared && git push -u origin feature-auth
 ```
 
-This creates:
+</td>
+<td width="50%" valign="top">
 
-```
-my-workspace/
-├── api/          ← from github.com/org/api
-├── web/          ← from github.com/org/web
-├── AGENTS.md     ← workflow guide for humans and agents
-└── .gitignore
-```
-
-Then work across repos as if they were one:
+**With `unirepo`**
 
 ```bash
+# create one workspace and one branch
+unirepo init my-workspace <repo...>
 cd my-workspace
-# edit files in api/ and web/
-git add . && git commit -m "feat: update shared types"
+unirepo branch feature-auth
+
+# edit api/, web/, and shared/ together
+
+# commit once from the workspace
+git add . && git commit -m "feat: add auth flow"
+
+# push changed subtrees
 unirepo push
 ```
 
-That's it. Each subtree gets pushed to its upstream repo automatically.
+</td>
+</tr>
+</table>
+
+## Same workflow, fewer commands
+
+`unirepo` keeps your upstream repos separate while removing:
+
+- Repo and branch juggling  
+- Repeated setup and commands  
+- Context switching  
+- Inconsistent cross-repo changes  
+
+It enables:
+
+- One place to see the full change  
+- Safe cross-repo refactors  
+- A single workspace for humans and AI
 
 
 ## Install
@@ -81,7 +107,6 @@ Or use without installing:
 npx unirepo-cli <command>
 ```
 
-
 ## Commands
 
 | Command | Description |
@@ -92,37 +117,17 @@ npx unirepo-cli <command>
 | `status` | Show subtrees, branches, and what changed |
 | `branch [name]` | Create or show the current push branch |
 | `push [subtree...]` | Push changed subtrees upstream |
-| `version` | Show CLI version |
 
 
-## Workflow
+## Why it works well for agents
 
-A typical session looks like this:
+AI coding agents work best when they can see the full change at once.
 
-```bash
-# 1. Create a branch for your work
-unirepo branch feature-auth
-
-# 2. Pull latest upstream changes
-unirepo pull
-
-# 3. Edit files across repos
-vim api/src/auth.js web/src/login.tsx
-
-# 4. Commit in the monorepo
-git add . && git commit -m "feat: add OAuth flow"
-
-# 5. Check what will be pushed
-unirepo status
-unirepo push --dry-run
-
-# 6. Push to upstream repos
-unirepo push
-
-# 7. Open one PR per upstream repo
-```
-
-The branch name you create in the workspace is reused when pushing to each upstream repo.
+- Update backend, frontend, and shared contracts in one pass
+- Commit coordinated changes from one repo
+- Check affected subtrees with `unirepo status`
+- Push only changed subtrees with `unirepo push`
+- Reuse the generated `AGENTS.md` workflow guide
 
 
 ## Command Reference
