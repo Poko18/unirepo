@@ -29,6 +29,14 @@ export function header(text) {
   console.log(chalk.dim('  ' + '─'.repeat(50)));
 }
 
+export function interactiveHeader() {
+  console.log();
+  console.log(chalk.bold.cyan(`  ${ICON.git}  Unirepo — Interactive setup`));
+  console.log(chalk.dim('  ' + '─'.repeat(50)));
+  console.log(chalk.dim('  Pick repos to bundle into a new subtree monorepo.'));
+  console.log();
+}
+
 export function step(n, total, text) {
   const prefix = chalk.dim(`  [${n}/${total}]`);
   console.log(`${prefix} ${text}`);
@@ -136,6 +144,8 @@ export function initSummary(dir, count, subtreeNames) {
     console.log(chalk.bold('  Next steps:'));
     console.log(`    ${chalk.dim('$')} cd ${dir.includes(' ') ? `"${dir}"` : dir}`);
     console.log(`    ${chalk.dim('$')} unirepo status`);
+    console.log(`    ${chalk.dim('# create a branch to target when pushing upstream')}`);
+    console.log(`    ${chalk.dim('$')} unirepo branch feature-x`);
     console.log(`    ${chalk.dim('# edit files in')} ${subtreeNames.map(n => chalk.cyan(n + '/')).join(', ')}`);
     console.log(`    ${chalk.dim('$')} git add . && git commit -m "feat: ..."`);
     console.log(`    ${chalk.dim('$')} unirepo push --dry-run`);
