@@ -136,6 +136,8 @@ export function initSummary(dir, count, subtreeNames) {
     console.log(chalk.bold('  Next steps:'));
     console.log(`    ${chalk.dim('$')} cd ${dir.includes(' ') ? `"${dir}"` : dir}`);
     console.log(`    ${chalk.dim('$')} unirepo status`);
+    console.log(`    ${chalk.dim('# create a branch to target when pushing upstream')}`);
+    console.log(`    ${chalk.dim('$')} unirepo branch feature-x`);
     console.log(`    ${chalk.dim('# edit files in')} ${subtreeNames.map(n => chalk.cyan(n + '/')).join(', ')}`);
     console.log(`    ${chalk.dim('$')} git add . && git commit -m "feat: ..."`);
     console.log(`    ${chalk.dim('$')} unirepo push --dry-run`);
