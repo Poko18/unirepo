@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseArgs } from '../src/index.js';
+import { parseArgs, validateCommandFlags } from '../src/index.js';
 
 test('parseArgs parses version aliases', () => {
   assert.deepEqual(parseArgs(['node', 'cli', '--version']), {
@@ -99,6 +99,26 @@ test('parseArgs parses command flags and positional arguments', () => {
   );
 
   assert.deepEqual(
+    parseArgs([
+      'node',
+      'cli',
+      'pull',
+      '--prefix',
+      'api',
+      '--branch',
+      'release/2026-04',
+    ]),
+    {
+      command: 'pull',
+      positional: [],
+      flags: {
+        prefix: 'api',
+        branch: 'release/2026-04',
+      },
+    }
+  );
+
+  assert.deepEqual(
     parseArgs(['node', 'cli', 'status', '--json', '--help']),
     {
       command: 'status',
@@ -109,4 +129,18 @@ test('parseArgs parses command flags and positional arguments', () => {
       },
     }
   );
+});
+
+test('validateCommandFlags rejects known flags on the wrong command', () => {
+  assert.throws(
+    () => validateCommandFlags('status', { prefix: 'api' }),
+    /Flag --prefix is not supported for "status"\./
+  );
+
+  assert.throws(
+    () => validateCommandFlags('push', { json: true }),
+    /Flag --json is not supported for "push"\./
+  );
+
+  assert.doesNotThrow(() => validateCommandFlags('pull', { prefix: 'api', branch: 'release/2026-04' }));
 });

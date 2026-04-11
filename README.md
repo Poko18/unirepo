@@ -173,13 +173,14 @@ Adds a repo to an existing workspace. The directory name defaults to the repo na
 ### pull
 
 ```bash
-unirepo pull [subtree...]
+unirepo pull [subtree...] [--prefix <name>]
 ```
 
-Pulls upstream changes. Without arguments, pulls all tracked subtrees.
+Pulls upstream changes. Without arguments, pulls all tracked subtrees. When you use `--branch` without naming a subtree, `unirepo` skips tracked subtrees that do not have that upstream branch.
 
 | Flag | Effect |
 | --- | --- |
+| `--prefix <name>` | Pull only one tracked subtree |
 | `--branch <name>` | Pull a specific upstream branch |
 | `--full-history` | Pull full history instead of squash |
 

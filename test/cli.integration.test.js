@@ -51,6 +51,26 @@ test('cli add command without repo url fails with code 1 and usage', () => {
   assert.match(result.output, /Usage: unirepo add <repo-url>/);
 });
 
+test('cli pull rejects mixing subtree arguments and --prefix', () => {
+  const result = runCli(['pull', 'api', '--prefix', 'web']);
+  assert.equal(result.status, 1);
+  assert.match(result.output, /Use either subtree arguments or --prefix, not both\./);
+});
+
+test('cli status rejects --prefix because it is not a status flag', () => {
+  const result = runCli(['status', '--prefix', 'api']);
+  assert.equal(result.status, 1);
+  assert.match(result.output, /Flag --prefix is not supported for "status"\./);
+  assert.match(result.output, /Usage: unirepo status \[--json\]/);
+});
+
+test('cli push rejects --json because it is not a push flag', () => {
+  const result = runCli(['push', '--json']);
+  assert.equal(result.status, 1);
+  assert.match(result.output, /Flag --json is not supported for "push"\./);
+  assert.match(result.output, /Usage: unirepo push \[subtree\.\.\.\] \[--branch <name>\] \[--dry-run\]/);
+});
+
 // Regression test for the symlink bug: when installed globally via npm,
 // the CLI is invoked through a symlink (e.g. /usr/local/bin/unirepo).
 // The isDirectRun check must resolve symlinks, otherwise main() never runs
