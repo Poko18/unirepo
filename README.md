@@ -32,21 +32,33 @@ git clone git@github.com:org/api.git
 git clone git@github.com:org/web.git
 git clone git@github.com:org/shared.git
 
-cd api && git checkout -b feature-auth
-cd ../web && git checkout -b feature-auth
-cd ../shared && git checkout -b feature-auth
+cd api
+git checkout -b feature-auth
+cd ../web
+git checkout -b feature-auth
+cd ../shared
+git checkout -b feature-auth
 
 # edit in 3 separate checkouts
 
 # commit in each repo
-cd ../api && git add . && git commit -m "feat: add auth"
-cd ../web && git add . && git commit -m "feat: add auth UI"
-cd ../shared && git add . && git commit -m "feat: add auth types"
+cd ../api
+git add .
+git commit -m "feat: add auth"
+cd ../web
+git add .
+git commit -m "feat: add auth UI"
+cd ../shared
+git add .
+git commit -m "feat: add auth types"
 
 # push from each repo
-cd ../api && git push -u origin feature-auth
-cd ../web && git push -u origin feature-auth
-cd ../shared && git push -u origin feature-auth
+cd ../api
+git push -u origin feature-auth
+cd ../web
+git push -u origin feature-auth
+cd ../shared
+git push -u origin feature-auth
 ```
 
 </td>
@@ -63,7 +75,8 @@ unirepo branch feature-auth
 # edit api/, web/, and shared/ together
 
 # commit once from the workspace
-git add . && git commit -m "feat: add auth flow"
+git add .
+git commit -m "feat: add auth flow"
 
 # push changed subtrees
 unirepo push
@@ -107,17 +120,6 @@ Or use without installing:
 npx unirepo-cli <command>
 ```
 
-## Commands
-
-| Command | Description |
-| --- | --- |
-| `init <dir> <repo...>` | Create a new workspace from one or more repos |
-| `add <repo>` | Add another repo to the workspace |
-| `pull [subtree...]` | Pull upstream changes into tracked subtrees |
-| `status` | Show subtrees, branches, and what changed |
-| `branch [name]` | Create or show the current push branch |
-| `push [subtree...]` | Push changed subtrees upstream |
-
 
 ## Why it works well for agents
 
@@ -130,7 +132,17 @@ AI coding agents work best when they can see the full change at once.
 - Reuse the generated `AGENTS.md` workflow guide
 
 
-## Command Reference
+## Commands
+
+| Command | Description |
+| --- | --- |
+| `init <dir> <repo...>` | Create a new workspace from one or more repos |
+| `add <repo>` | Add another repo to the workspace |
+| `pull [subtree...]` | Pull upstream changes into tracked subtrees |
+| `status` | Show subtrees, branches, and what changed |
+| `branch [name]` | Create or show the current push branch |
+| `push [subtree...]` | Push changed subtrees upstream |
+
 
 ### init
 
