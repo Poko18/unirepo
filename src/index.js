@@ -54,6 +54,52 @@ export function parseArgs(argv) {
   return { command, positional, flags };
 }
 
+const COMMAND_USAGE = {
+  init: 'Usage: unirepo init <dir> <repo-url> [repo-url...]',
+  add: 'Usage: unirepo add <repo-url> [--prefix <name>] [--branch <name>] [--full-history]',
+  pull: 'Usage: unirepo pull [subtree...] [--prefix <name>] [--branch <name>] [--full-history]',
+  status: 'Usage: unirepo status [--json]',
+  push: 'Usage: unirepo push [subtree...] [--branch <name>] [--dry-run]',
+  branch: 'Usage: unirepo branch [name]',
+};
+
+const COMMAND_FLAGS = {
+  version: new Set(),
+  init: new Set(['fullHistory']),
+  add: new Set(['prefix', 'branch', 'fullHistory']),
+  pull: new Set(['prefix', 'branch', 'fullHistory']),
+  status: new Set(['json']),
+  push: new Set(['branch', 'dryRun']),
+  branch: new Set(),
+};
+
+const FLAG_NAMES = {
+  fullHistory: '--full-history',
+  json: '--json',
+  dryRun: '--dry-run',
+  prefix: '--prefix',
+  branch: '--branch',
+};
+
+export function validateCommandFlags(command, flags) {
+  const allowedFlags = COMMAND_FLAGS[command];
+  if (!allowedFlags) {
+    return;
+  }
+
+  const unsupportedFlags = Object.keys(flags)
+    .filter((flag) => flag !== 'help' && !allowedFlags.has(flag))
+    .map((flag) => FLAG_NAMES[flag] || `--${flag}`);
+
+  if (unsupportedFlags.length === 0) {
+    return;
+  }
+
+  const label = unsupportedFlags.length === 1 ? 'Flag' : 'Flags';
+  const verb = unsupportedFlags.length === 1 ? 'is' : 'are';
+  throw new Error(`${label} ${unsupportedFlags.join(', ')} ${verb} not supported for "${command}".`);
+}
+
 // ── Main ───────────────────────────────────────────────────────────────────────
 
 export async function main() {
@@ -62,6 +108,17 @@ export async function main() {
   if (!command || command === 'help' || flags.help) {
     ui.usage();
     process.exit(0);
+  }
+
+  try {
+    validateCommandFlags(command, flags);
+  } catch (err) {
+    ui.error(err.message);
+    const usage = COMMAND_USAGE[command];
+    if (usage) {
+      ui.info(usage);
+    }
+    process.exit(1);
   }
 
   switch (command) {
@@ -102,8 +159,13 @@ export async function main() {
     }
 
     case 'pull': {
+      if (flags.prefix && positional.length > 0) {
+        ui.error('Usage: unirepo pull [subtree...] [--prefix <name>] [--branch <name>] [--full-history]');
+        ui.info('Use either subtree arguments or --prefix, not both.');
+        process.exit(1);
+      }
       await runPull({
-        subtrees: positional.length > 0 ? positional : undefined,
+        subtrees: flags.prefix ? [flags.prefix] : positional.length > 0 ? positional : undefined,
         branch: flags.branch,
         fullHistory: flags.fullHistory || false,
       });

@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync, existsSync, rmSync } from 'node:fs';
 import { resolve, join } from 'node:path';
-import { git, detectDefaultBranch, extractRepoName } from '../git.js';
+import { git, detectDefaultBranch, extractRepoName, setConfiguredSubtreeBranch } from '../git.js';
 import { validateGitSubtree, validateUrls, validateNoDuplicateNames, validateReachable } from '../validate.js';
 import { AGENTS_MD, GITIGNORE } from '../templates.js';
 import * as ui from '../ui.js';
@@ -78,6 +78,8 @@ export async function runInit({ dir, repos, fullHistory }) {
         git(`fetch --no-tags --depth 1 "${name}" "${branch}"`, { cwd: absDir });
         git(`subtree add --squash --prefix="${name}" "${name}" "${branch}"`, { cwd: absDir });
       }
+
+      setConfiguredSubtreeBranch(absDir, name, branch);
 
       ui.success(`${name} imported`);
     }

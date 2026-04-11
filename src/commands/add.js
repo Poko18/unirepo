@@ -1,4 +1,4 @@
-import { git, detectDefaultBranch, extractRepoName } from '../git.js';
+import { git, detectDefaultBranch, extractRepoName, setConfiguredSubtreeBranch } from '../git.js';
 import { validateGitSubtree, validateUrls, validateInsideMonorepo, validateNameAvailable, validateReachable } from '../validate.js';
 import * as ui from '../ui.js';
 
@@ -38,6 +38,8 @@ export async function runAdd({ url, prefix, branch, fullHistory }) {
     git(`fetch --no-tags --depth 1 "${name}" "${upstreamBranch}"`, { cwd });
     git(`subtree add --squash --prefix="${name}" "${name}" "${upstreamBranch}"`, { cwd });
   }
+
+  setConfiguredSubtreeBranch(cwd, name, upstreamBranch);
 
   // ── Done ─────────────────────────────────────────────────────────────────
   ui.step(4, 4, 'Done!');

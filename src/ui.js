@@ -195,6 +195,7 @@ ${chalk.bold('Add options:')}
   --full-history              Import full git history
 
 ${chalk.bold('Pull options:')}
+  --prefix <name>             Pull only one tracked subtree
   --branch <name>             Pull a specific upstream branch for all selected subtrees
   --full-history              Pull full history instead of squash mode
 
@@ -215,6 +216,9 @@ ${chalk.bold('Examples:')}
 
   ${chalk.dim('# Pull upstream updates before working')}
   npx unirepo pull
+
+  ${chalk.dim('# Pull one subtree from a specific upstream branch')}
+  npx unirepo pull --prefix api --branch release/2026-04
 
   ${chalk.dim('# Check status')}
   npx unirepo status

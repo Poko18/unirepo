@@ -1,4 +1,4 @@
-import { getCurrentBranch, getSubtreePrefixes, getChangedSubtrees, getRemoteBranch } from '../git.js';
+import { getCurrentBranch, getSubtreePrefixes, getChangedSubtrees, getTrackedSubtreeBranch } from '../git.js';
 import { validateInsideMonorepo } from '../validate.js';
 import * as ui from '../ui.js';
 
@@ -15,7 +15,7 @@ export async function runStatus({ json }) {
   const subtrees = prefixes.map((p) => ({
     name: p.name,
     url: p.url,
-    upstream: getRemoteBranch(cwd, p.name) || 'unknown',
+    upstream: getTrackedSubtreeBranch(cwd, p.name) || 'unknown',
     pushBranch: branch,
     changed: changedNames.has(p.name),
   }));

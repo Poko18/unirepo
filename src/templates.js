@@ -35,7 +35,7 @@ unirepo add <repo-url> --branch <branch>
 
 - \`status\` shows tracked subtrees, upstream branches, the current push branch, and changed files.
 - \`branch <name>\` creates the local branch name you should reuse when pushing subtrees upstream.
-- \`pull\` updates one or more tracked subtrees from upstream before or during your work.
+- \`pull\` updates one or more tracked subtrees from upstream before or during your work. Use \`--prefix\` when you want a branch-specific pull for just one subtree.
 - \`push --dry-run\` is the safe first step before a real push.
 - \`push\` without subtree names auto-detects changed subtrees. \`push <subtree>\` pushes one subtree.
 - \`add\` imports another repository as a subtree. Use \`--branch\` to import from a non-default upstream branch.
@@ -56,6 +56,7 @@ git checkout -b <branch>
 CLI:
 \`\`\`bash
 unirepo pull
+unirepo pull --prefix <subtree> --branch <branch>
 \`\`\`
 Git:
 \`\`\`bash

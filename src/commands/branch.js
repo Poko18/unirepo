@@ -1,4 +1,4 @@
-import { git, getCurrentBranch, getSubtreePrefixes, getRemoteBranch } from '../git.js';
+import { git, getCurrentBranch, getSubtreePrefixes, getTrackedSubtreeBranch } from '../git.js';
 import { validateInsideMonorepo } from '../validate.js';
 import * as ui from '../ui.js';
 
@@ -17,7 +17,7 @@ export async function runBranch({ name }) {
     ui.info(`Current branch: ${currentBranch}`);
     ui.blank();
     for (const s of subtrees) {
-      const upstream = getRemoteBranch(cwd, s.name) || 'unknown';
+      const upstream = getTrackedSubtreeBranch(cwd, s.name) || 'unknown';
       ui.info(`  ${s.name}  upstream: ${upstream}  push target: ${currentBranch}`);
     }
     ui.blank();

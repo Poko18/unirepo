@@ -2,6 +2,14 @@ import { execSync } from 'node:child_process';
 import { readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
+function quoteShellArg(value) {
+  return JSON.stringify(value);
+}
+
+function getSubtreeBranchConfigKey(prefixName) {
+  return `unirepo.subtree.${prefixName}.branch`;
+}
+
 /**
  * Execute a git command and return trimmed stdout.
  * @param {string} args - git arguments
@@ -213,18 +221,90 @@ export function getChangedSubtrees(cwd) {
  */
 export function getRemoteBranch(cwd, remoteName) {
   try {
-    const refs = execSync(`git branch -r --list "${remoteName}/*"`, {
+    const headRef = execSync(`git symbolic-ref --quiet --short "refs/remotes/${remoteName}/HEAD"`, {
+      cwd,
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    }).trim();
+    if (headRef) {
+      const slash = headRef.indexOf('/');
+      return slash >= 0 ? headRef.slice(slash + 1) : headRef;
+    }
+  } catch {
+    // fall through
+  }
+
+  try {
+    const refs = execSync(`git for-each-ref --format="%(refname:short)" "refs/remotes/${remoteName}"`, {
       cwd,
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
     }).trim();
     if (!refs) return null;
-    // e.g. "Hello-World/master" → "master"
-    const first = refs.split('\n')[0].trim();
-    const slash = first.indexOf('/');
-    return slash >= 0 ? first.slice(slash + 1) : first;
+
+    const branches = refs
+      .split('\n')
+      .map((ref) => ref.trim())
+      .filter(Boolean)
+      .map((ref) => {
+        const slash = ref.indexOf('/');
+        return slash >= 0 ? ref.slice(slash + 1) : ref;
+      })
+      .filter((ref) => ref !== 'HEAD');
+
+    if (branches.length === 0) {
+      return null;
+    }
+
+    if (branches.includes('main')) return 'main';
+    if (branches.includes('master')) return 'master';
+    return branches[0];
   } catch {
     return null;
+  }
+}
+
+/**
+ * Get the branch explicitly tracked for a subtree in local git config.
+ */
+export function getConfiguredSubtreeBranch(cwd, prefixName) {
+  const branch = git(`config --get ${quoteShellArg(getSubtreeBranchConfigKey(prefixName))}`, {
+    cwd,
+    silent: true,
+    allowFailure: true,
+  });
+  return branch || null;
+}
+
+/**
+ * Persist the branch currently tracked for a subtree in local git config.
+ */
+export function setConfiguredSubtreeBranch(cwd, prefixName, branch) {
+  git(
+    `config ${quoteShellArg(getSubtreeBranchConfigKey(prefixName))} ${quoteShellArg(branch)}`,
+    { cwd, silent: true }
+  );
+}
+
+/**
+ * Get the branch unirepo should treat as the subtree's upstream branch.
+ */
+export function getTrackedSubtreeBranch(cwd, prefixName) {
+  return getConfiguredSubtreeBranch(cwd, prefixName) || getRemoteBranch(cwd, prefixName);
+}
+
+/**
+ * Check whether a remote has a specific branch.
+ */
+export function hasRemoteBranch(cwd, remoteName, branch) {
+  try {
+    execSync(`git ls-remote --exit-code --heads "${remoteName}" "${branch}"`, {
+      cwd,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    return true;
+  } catch {
+    return false;
   }
 }
 
