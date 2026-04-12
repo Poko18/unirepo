@@ -179,6 +179,7 @@ ${chalk.bold('Commands:')}
   ${chalk.green('pull')} [subtree...]            Pull subtree updates from upstream
   ${chalk.green('status')}                      Show tracked subtrees and changes
   ${chalk.green('push')} [subtree...]            Push changed subtrees upstream
+  ${chalk.green('pr')}   [subtree...]            Open PRs for changed subtree repos
   ${chalk.green('branch')} [name]               Create a branch on all upstream repos
   ${chalk.green('version')}                     Show the installed CLI version
 
@@ -206,6 +207,14 @@ ${chalk.bold('Push options:')}
   --branch <name>             Branch name for upstream push (default: current)
   --dry-run                   Show commands without executing
 
+${chalk.bold('PR options:')}
+  --title <title>             Shared PR title (required)
+  --body <text>               Shared PR description
+  --base <name>               Override the base branch for all selected repos
+  --head <name>               Override the head branch (default: current branch)
+  --draft                     Create draft PRs
+  --dry-run                   Show gh pr create commands without executing
+
 ${chalk.bold('Examples:')}
   ${chalk.dim('# Create monorepo from multiple repos')}
   npx unirepo init my-monorepo https://github.com/org/api.git https://github.com/org/web.git
@@ -228,5 +237,8 @@ ${chalk.bold('Examples:')}
 
   ${chalk.dim('# Push changes upstream')}
   npx unirepo push --dry-run
+
+  ${chalk.dim('# Open PRs for changed subtree repos')}
+  npx unirepo pr --title "feat: add auth flow" --body "Cross-repo auth changes"
 `);
 }

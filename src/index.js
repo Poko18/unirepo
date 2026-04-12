@@ -8,6 +8,7 @@ import { runPull } from './commands/pull.js';
 import { runStatus } from './commands/status.js';
 import { runPush } from './commands/push.js';
 import { runBranch } from './commands/branch.js';
+import { runPr } from './commands/pr.js';
 import { pathToFileURL } from 'node:url';
 import { realpathSync } from 'node:fs';
 
@@ -37,10 +38,20 @@ export function parseArgs(argv) {
       flags.json = true;
     } else if (arg === '--dry-run') {
       flags.dryRun = true;
+    } else if (arg === '--draft') {
+      flags.draft = true;
     } else if (arg === '--prefix' && i + 1 < args.length) {
       flags.prefix = args[++i];
     } else if (arg === '--branch' && i + 1 < args.length) {
       flags.branch = args[++i];
+    } else if (arg === '--title' && i + 1 < args.length) {
+      flags.title = args[++i];
+    } else if (arg === '--body' && i + 1 < args.length) {
+      flags.body = args[++i];
+    } else if (arg === '--base' && i + 1 < args.length) {
+      flags.base = args[++i];
+    } else if (arg === '--head' && i + 1 < args.length) {
+      flags.head = args[++i];
     } else if (arg === '--help' || arg === '-h') {
       flags.help = true;
     } else if (arg.startsWith('-')) {
@@ -61,6 +72,7 @@ const COMMAND_USAGE = {
   status: 'Usage: unirepo status [--json]',
   push: 'Usage: unirepo push [subtree...] [--branch <name>] [--dry-run]',
   branch: 'Usage: unirepo branch [name]',
+  pr: 'Usage: unirepo pr [subtree...] --title <title> [--body <text>] [--base <name>] [--head <name>] [--draft] [--dry-run]',
 };
 
 const COMMAND_FLAGS = {
@@ -71,6 +83,7 @@ const COMMAND_FLAGS = {
   status: new Set(['json']),
   push: new Set(['branch', 'dryRun']),
   branch: new Set(),
+  pr: new Set(['title', 'body', 'base', 'head', 'draft', 'dryRun']),
 };
 
 const FLAG_NAMES = {
@@ -79,6 +92,11 @@ const FLAG_NAMES = {
   dryRun: '--dry-run',
   prefix: '--prefix',
   branch: '--branch',
+  title: '--title',
+  body: '--body',
+  base: '--base',
+  head: '--head',
+  draft: '--draft',
 };
 
 export function validateCommandFlags(command, flags) {
@@ -188,6 +206,24 @@ export async function main() {
 
     case 'branch': {
       await runBranch({ name: positional[0] });
+      break;
+    }
+
+    case 'pr': {
+      if (!flags.title) {
+        ui.error('Usage: unirepo pr [subtree...] --title <title> [--body <text>] [--base <name>] [--head <name>] [--draft] [--dry-run]');
+        ui.info('Provide a shared PR title with --title. Use --body to set the description.');
+        process.exit(1);
+      }
+      await runPr({
+        subtrees: positional.length > 0 ? positional : undefined,
+        title: flags.title,
+        body: flags.body || '',
+        base: flags.base,
+        head: flags.head,
+        draft: flags.draft || false,
+        dryRun: flags.dryRun || false,
+      });
       break;
     }
 

@@ -30,6 +30,7 @@ unirepo branch <branch>
 unirepo pull
 unirepo push --dry-run
 unirepo push
+unirepo pr --title "feat: ..." --body "..."
 unirepo add <repo-url> --branch <branch>
 \`\`\`
 
@@ -38,6 +39,7 @@ unirepo add <repo-url> --branch <branch>
 - \`pull\` updates one or more tracked subtrees from upstream before or during your work. Use \`--prefix\` when you want a branch-specific pull for just one subtree.
 - \`push --dry-run\` is the safe first step before a real push.
 - \`push\` without subtree names auto-detects changed subtrees. \`push <subtree>\` pushes one subtree.
+- \`pr\` opens one PR per changed or explicitly selected subtree repo after those branches have been pushed.
 - \`add\` imports another repository as a subtree. Use \`--branch\` to import from a non-default upstream branch.
 
 ## Workflow
@@ -93,6 +95,13 @@ Git:
 git subtree push --prefix=<subtree> <remote-or-url> <branch>
 \`\`\`
 
+7. Open one PR per upstream subtree repo after push.
+CLI:
+\`\`\`bash
+unirepo pr --title "feat: ..." --body "..."
+unirepo pr <subtree> --title "feat: ..."
+\`\`\`
+
 ## Raw Git Subtree
 
 Use these when operating without the CLI:
@@ -116,6 +125,7 @@ git subtree push --prefix=libfoo https://github.com/example/libfoo.git <branch>
 - Open one PR per upstream subtree repo.
 - Use the same branch name in each upstream repo.
 - Target the default branch of the upstream repo unless that repo's workflow says otherwise.
+- Run \`unirepo pr\` only after the head branch exists upstream for that subtree repo.
 - Ensure each PR contains only changes from its own subtree.
 `;
 
