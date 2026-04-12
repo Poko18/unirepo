@@ -142,6 +142,7 @@ AI coding agents work best when they can see the full change at once.
 | `status` | Show subtrees, branches, and what changed |
 | `branch [name]` | Create or show the current push branch |
 | `push [subtree...]` | Push changed subtrees upstream |
+| `pr [subtree...]` | Open pull requests for changed subtree repos |
 
 
 ### init
@@ -212,6 +213,24 @@ Pushes changed subtrees upstream. Without arguments, auto-detects which subtrees
 | --- | --- |
 | `--branch <name>` | Override the upstream branch name |
 | `--dry-run` | Show what would run without executing |
+
+### pr
+
+```bash
+unirepo pr [subtree...] --title <title> [--body <text>]
+```
+
+Opens one GitHub pull request per changed subtree repo. Without subtree arguments, `unirepo` auto-detects changed subtrees. Use explicit subtree names when you want PRs for only part of the workspace.
+
+
+| Flag | Effect |
+| --- | --- |
+| `--title <title>` | Shared PR title for all selected repos |
+| `--body <text>` | Shared PR description |
+| `--base <name>` | Override the base branch for all selected repos |
+| `--head <name>` | Override the head branch name (default: current branch) |
+| `--draft` | Create draft pull requests |
+| `--dry-run` | Show the `gh pr create` commands without executing |
 
 
 ## How It Works

@@ -119,6 +119,31 @@ test('parseArgs parses command flags and positional arguments', () => {
   );
 
   assert.deepEqual(
+    parseArgs([
+      'node',
+      'cli',
+      'pr',
+      'api',
+      '--title',
+      'feat: auth flow',
+      '--body',
+      'Cross-repo update',
+      '--draft',
+      '--dry-run',
+    ]),
+    {
+      command: 'pr',
+      positional: ['api'],
+      flags: {
+        title: 'feat: auth flow',
+        body: 'Cross-repo update',
+        draft: true,
+        dryRun: true,
+      },
+    }
+  );
+
+  assert.deepEqual(
     parseArgs(['node', 'cli', 'status', '--json', '--help']),
     {
       command: 'status',
@@ -142,5 +167,11 @@ test('validateCommandFlags rejects known flags on the wrong command', () => {
     /Flag --json is not supported for "push"\./
   );
 
+  assert.throws(
+    () => validateCommandFlags('pr', { branch: 'feature/refactor' }),
+    /Flag --branch is not supported for "pr"\./
+  );
+
   assert.doesNotThrow(() => validateCommandFlags('pull', { prefix: 'api', branch: 'release/2026-04' }));
+  assert.doesNotThrow(() => validateCommandFlags('pr', { title: 'feat: auth flow', dryRun: true }));
 });

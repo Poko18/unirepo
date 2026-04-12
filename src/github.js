@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process';
+import { execFileSync, execSync } from 'node:child_process';
 
 /**
  * Thin wrapper around the `gh` CLI. We shell out rather than hitting the
@@ -19,6 +19,19 @@ function runGh(args, { timeout = 30000 } = {}) {
     });
   } catch (err) {
     const stderr = (err.stderr || '').trim();
+    throw new Error(stderr || err.message);
+  }
+}
+
+function runGhArgs(args, { timeout = 30000 } = {}) {
+  try {
+    return execFileSync('gh', args, {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+      timeout,
+    });
+  } catch (err) {
+    const stderr = (err.stderr || '').toString().trim();
     throw new Error(stderr || err.message);
   }
 }
@@ -110,4 +123,50 @@ export function searchRepos(query, limit = SEARCH_LIMIT) {
     description: r.description,
     isPrivate: r.isPrivate,
   }));
+}
+
+export function getGitHubRepoSlugFromUrl(url) {
+  const trimmed = url.replace(/\/$/, '').replace(/\.git$/, '');
+  const patterns = [
+    /^https?:\/\/github\.com\/([^/]+)\/([^/]+)$/i,
+    /^git@github\.com:([^/]+)\/([^/]+)$/i,
+    /^ssh:\/\/git@github\.com\/([^/]+)\/([^/]+)$/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = trimmed.match(pattern);
+    if (match) {
+      return `${match[1]}/${match[2]}`;
+    }
+  }
+
+  return null;
+}
+
+export function createPullRequest({ repo, base, head, title, body, draft = false }) {
+  const args = [
+    'pr',
+    'create',
+    '--repo',
+    repo,
+    '--base',
+    base,
+    '--head',
+    head,
+    '--title',
+    title,
+    '--body',
+    body,
+  ];
+
+  if (draft) {
+    args.push('--draft');
+  }
+
+  const output = runGhArgs(args);
+  const lines = output
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  return lines.at(-1) || '';
 }

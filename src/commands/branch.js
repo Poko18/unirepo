@@ -49,6 +49,6 @@ export async function runBranch({ name }) {
   ui.info('  1. Make changes in subtree directories');
   ui.info('  2. Commit in the monorepo');
   ui.info(`  3. unirepo push`);
-  ui.info('  4. Open one PR per upstream repo');
+  ui.info('  4. unirepo pr --title "..." --body "..."');
   ui.blank();
 }

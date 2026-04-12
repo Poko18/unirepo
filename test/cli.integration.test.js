@@ -71,6 +71,13 @@ test('cli push rejects --json because it is not a push flag', () => {
   assert.match(result.output, /Usage: unirepo push \[subtree\.\.\.\] \[--branch <name>\] \[--dry-run\]/);
 });
 
+test('cli pr without title fails with code 1 and usage', () => {
+  const result = runCli(['pr']);
+  assert.equal(result.status, 1);
+  assert.match(result.output, /Usage: unirepo pr \[subtree\.\.\.\] --title <title>/);
+  assert.match(result.output, /Provide a shared PR title with --title\./);
+});
+
 // Regression test for the symlink bug: when installed globally via npm,
 // the CLI is invoked through a symlink (e.g. /usr/local/bin/unirepo).
 // The isDirectRun check must resolve symlinks, otherwise main() never runs
