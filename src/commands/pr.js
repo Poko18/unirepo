@@ -1,9 +1,11 @@
 import {
+  getConfiguredSubtreePushBranch,
   getCurrentBranch,
   getSubtreePrefixes,
   getChangedSubtrees,
   getTrackedSubtreeBranch,
   hasRemoteBranch,
+  resolveSubtreePushBranch,
 } from '../git.js';
 import { isGhAvailable, getGitHubRepoSlugFromUrl, createPullRequest } from '../github.js';
 import { validateInsideMonorepo } from '../validate.js';
@@ -37,8 +39,10 @@ export function planPrTargets({
   changedPrefixes,
   requestedSubtrees,
   requestedBase,
-  headBranch,
+  requestedHead,
+  currentBranch,
   getTrackedBranchFn = () => null,
+  getConfiguredPushBranchFn = () => null,
   getRepoSlugFn = () => null,
 }) {
   return selectPrSubtrees(allPrefixes, changedPrefixes, requestedSubtrees).map((prefix) => ({
@@ -49,7 +53,11 @@ export function planPrTargets({
       requestedBase,
       trackedBranch: getTrackedBranchFn(prefix.name),
     }),
-    head: headBranch,
+    head: resolveSubtreePushBranch({
+      requestedBranch: requestedHead,
+      configuredBranch: getConfiguredPushBranchFn(prefix.name),
+      currentBranch,
+    }),
   }));
 }
 
@@ -66,7 +74,6 @@ export async function runPr({ subtrees: requestedSubtrees, title, body, base, he
   }
 
   const currentBranch = getCurrentBranch(cwd);
-  const headBranch = head || currentBranch;
   const allPrefixes = getSubtreePrefixes(cwd);
   const changedPrefixes = getChangedSubtrees(cwd);
   const targets = planPrTargets({
@@ -74,8 +81,10 @@ export async function runPr({ subtrees: requestedSubtrees, title, body, base, he
     changedPrefixes,
     requestedSubtrees,
     requestedBase: base,
-    headBranch,
+    requestedHead: head,
+    currentBranch,
     getTrackedBranchFn: (prefixName) => getTrackedSubtreeBranch(cwd, prefixName),
+    getConfiguredPushBranchFn: (prefixName) => getConfiguredSubtreePushBranch(cwd, prefixName),
     getRepoSlugFn: getGitHubRepoSlugFromUrl,
   });
 
@@ -86,7 +95,12 @@ export async function runPr({ subtrees: requestedSubtrees, title, body, base, he
     return;
   }
 
-  ui.info(`Head branch: ${headBranch}`);
+  const uniqueHeadBranches = [...new Set(targets.map((target) => target.head))];
+  if (uniqueHeadBranches.length === 1) {
+    ui.info(`Head branch: ${uniqueHeadBranches[0]}`);
+  } else {
+    ui.info('Head branches: per subtree');
+  }
   ui.info(`Subtrees: ${targets.map((target) => target.name).join(', ')}`);
   ui.blank();
 

@@ -1,4 +1,12 @@
-import { git, getCurrentBranch, getSubtreePrefixes, getChangedSubtrees, hasUncommittedChanges } from '../git.js';
+import {
+  git,
+  getConfiguredSubtreePushBranch,
+  getCurrentBranch,
+  getSubtreePrefixes,
+  getChangedSubtrees,
+  hasUncommittedChanges,
+  resolveSubtreePushBranch,
+} from '../git.js';
 import { validateGitSubtree, validateInsideMonorepo } from '../validate.js';
 import * as ui from '../ui.js';
 
@@ -13,7 +21,6 @@ export async function runPush({ subtrees: requestedSubtrees, branch, dryRun }) {
   validateInsideMonorepo(cwd);
 
   const currentBranch = getCurrentBranch(cwd);
-  const pushBranch = branch || currentBranch;
 
   // ── Check for uncommitted work ────────────────────────────────────────────
   const hasUncommitted = hasUncommittedChanges(cwd);
@@ -49,14 +56,28 @@ export async function runPush({ subtrees: requestedSubtrees, branch, dryRun }) {
     }
   }
 
-  ui.info(`Branch: ${pushBranch}`);
-  ui.info(`Subtrees to push: ${toPush.map((p) => p.name).join(', ')}`);
+  const targets = toPush.map((prefix) => ({
+    ...prefix,
+    pushBranch: resolveSubtreePushBranch({
+      requestedBranch: branch,
+      configuredBranch: getConfiguredSubtreePushBranch(cwd, prefix.name),
+      currentBranch,
+    }),
+  }));
+  const uniqueBranches = [...new Set(targets.map((target) => target.pushBranch))];
+
+  if (uniqueBranches.length === 1) {
+    ui.info(`Branch: ${uniqueBranches[0]}`);
+  } else {
+    ui.info('Branches: per subtree');
+  }
+  ui.info(`Subtrees to push: ${targets.map((target) => `${target.name}:${target.pushBranch}`).join(', ')}`);
   ui.blank();
 
   // ── Dry run ──────────────────────────────────────────────────────────────
   if (dryRun) {
-    const commands = toPush.map(
-      (p) => `git subtree push --prefix="${p.name}" "${p.name}" "${pushBranch}"`
+    const commands = targets.map(
+      (target) => `git subtree push --prefix="${target.name}" "${target.name}" "${target.pushBranch}"`
     );
     ui.dryRun(commands);
     return;
@@ -66,15 +87,15 @@ export async function runPush({ subtrees: requestedSubtrees, branch, dryRun }) {
   let succeeded = 0;
   let failed = 0;
 
-  for (const prefix of toPush) {
-    ui.pushStart(prefix.name, pushBranch);
+  for (const target of targets) {
+    ui.pushStart(target.name, target.pushBranch);
     ui.pushSlow();
     try {
-      git(`subtree push --prefix="${prefix.name}" "${prefix.name}" "${pushBranch}"`, { cwd });
-      ui.success(`${prefix.name} pushed`);
+      git(`subtree push --prefix="${target.name}" "${target.name}" "${target.pushBranch}"`, { cwd });
+      ui.success(`${target.name} pushed`);
       succeeded++;
     } catch (err) {
-      ui.error(`Failed to push ${prefix.name}: ${err.message}`);
+      ui.error(`Failed to push ${target.name}: ${err.message}`);
       failed++;
     }
   }
@@ -82,7 +103,11 @@ export async function runPush({ subtrees: requestedSubtrees, branch, dryRun }) {
   // ── Summary ──────────────────────────────────────────────────────────────
   ui.blank();
   if (failed === 0) {
-    ui.success(`All ${succeeded} subtree(s) pushed to branch "${pushBranch}"`);
+    if (uniqueBranches.length === 1) {
+      ui.success(`All ${succeeded} subtree(s) pushed to branch "${uniqueBranches[0]}"`);
+    } else {
+      ui.success(`All ${succeeded} subtree(s) pushed`);
+    }
   } else {
     ui.warning(`${succeeded} pushed, ${failed} failed`);
   }

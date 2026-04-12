@@ -31,10 +31,15 @@ test('planPrTargets maps subtree metadata to repo, base, and head branches', () 
       { name: 'api', url: 'https://github.com/org/api.git' },
       { name: 'web', url: 'https://github.com/org/web.git' },
     ],
-    changedPrefixes: [{ name: 'api', url: 'https://github.com/org/api.git' }],
-    headBranch: 'feature/auth-flow',
+    changedPrefixes: [
+      { name: 'api', url: 'https://github.com/org/api.git' },
+      { name: 'web', url: 'https://github.com/org/web.git' },
+    ],
+    currentBranch: 'feature/auth-flow',
     requestedBase: undefined,
+    requestedHead: undefined,
     getTrackedBranchFn: (prefixName) => (prefixName === 'api' ? 'main' : 'develop'),
+    getConfiguredPushBranchFn: (prefixName) => (prefixName === 'web' ? 'feature/web-auth-flow' : null),
     getRepoSlugFn: (url) => url.replace('https://github.com/', '').replace(/\.git$/, ''),
   });
 
@@ -45,6 +50,36 @@ test('planPrTargets maps subtree metadata to repo, base, and head branches', () 
       url: 'https://github.com/org/api.git',
       base: 'main',
       head: 'feature/auth-flow',
+    },
+    {
+      name: 'web',
+      repo: 'org/web',
+      url: 'https://github.com/org/web.git',
+      base: 'develop',
+      head: 'feature/web-auth-flow',
+    },
+  ]);
+});
+
+test('planPrTargets lets explicit head override configured subtree push branches', () => {
+  const targets = planPrTargets({
+    allPrefixes: [{ name: 'api', url: 'https://github.com/org/api.git' }],
+    changedPrefixes: [{ name: 'api', url: 'https://github.com/org/api.git' }],
+    currentBranch: 'feature/auth-flow',
+    requestedBase: undefined,
+    requestedHead: 'release/auth-hotfix',
+    getTrackedBranchFn: () => 'main',
+    getConfiguredPushBranchFn: () => 'feature/api-auth-flow',
+    getRepoSlugFn: (url) => url.replace('https://github.com/', '').replace(/\.git$/, ''),
+  });
+
+  assert.deepEqual(targets, [
+    {
+      name: 'api',
+      repo: 'org/api',
+      url: 'https://github.com/org/api.git',
+      base: 'main',
+      head: 'release/auth-hotfix',
     },
   ]);
 });

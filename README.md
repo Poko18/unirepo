@@ -6,7 +6,7 @@
 
 ### One workspace to refactor your whole stack in one go
 
-Work across multiple repos like they’re one. Unirepo turns multiple GitHub repositories into a single unified workspace. Edit backend, frontend, and shared code in one tree, commit from one place, and push changes back to each repo using the same branch.
+Work across multiple repos like they’re one. Unirepo turns multiple GitHub repositories into a single unified workspace. Edit backend, frontend, and shared code in one tree, commit from one place, and push changes back to each repo using the same branch by default.
 
 ### Built for AI coding agents
 
@@ -140,7 +140,7 @@ AI coding agents work best when they can see the full change at once.
 | `add <repo>` | Add another repo to the workspace |
 | `pull [subtree...]` | Pull upstream changes into tracked subtrees |
 | `status` | Show subtrees, branches, and what changed |
-| `branch [name]` | Create or show the current push branch |
+| `branch [name]` | Create or show the current workspace branch |
 | `push [subtree...]` | Push changed subtrees upstream |
 | `pr [subtree...]` | Open pull requests for changed subtree repos |
 
@@ -191,7 +191,7 @@ Pulls upstream changes. Without arguments, pulls all tracked subtrees. When you 
 unirepo status [--json]
 ```
 
-Shows tracked subtrees, their upstream branches, the current push branch, and which subtrees have changes.
+Shows tracked subtrees, their upstream branches, the current workspace branch, each subtree's effective push branch, and which subtrees have changes.
 
 ### branch
 
@@ -199,7 +199,25 @@ Shows tracked subtrees, their upstream branches, the current push branch, and wh
 unirepo branch [name]
 ```
 
-With a name: creates and switches to a new branch. Without: shows the current branch and push targets.
+With a name: creates and switches to a new branch. That branch becomes the default push target for subtrees that do not have their own configured override. Without: shows the current branch and effective push targets.
+
+### Per-subtree push branches
+
+By default, `unirepo branch <name>` sets the workspace branch and subtrees push and open PRs from that same branch.
+
+If one subtree repo needs a different branch target, configure it in local git config:
+
+```bash
+git config unirepo.subtree.api.pushBranch feature-api
+git config unirepo.subtree.web.pushBranch feature/web-auth
+unirepo status
+```
+
+Remove an override and go back to the workspace branch default:
+
+```bash
+git config --unset unirepo.subtree.api.pushBranch
+```
 
 ### push
 
@@ -207,11 +225,11 @@ With a name: creates and switches to a new branch. Without: shows the current br
 unirepo push [subtree...] [--dry-run]
 ```
 
-Pushes changed subtrees upstream. Without arguments, auto-detects which subtrees have changes.
+Pushes changed subtrees upstream. Without arguments, auto-detects which subtrees have changes. Each subtree pushes to its configured push branch or the current workspace branch by default.
 
 | Flag | Effect |
 | --- | --- |
-| `--branch <name>` | Override the upstream branch name |
+| `--branch <name>` | Override the push branch name for all selected subtrees |
 | `--dry-run` | Show what would run without executing |
 
 ### pr
@@ -220,7 +238,7 @@ Pushes changed subtrees upstream. Without arguments, auto-detects which subtrees
 unirepo pr [subtree...] --title <title> [--body <text>]
 ```
 
-Opens one GitHub pull request per changed subtree repo. Without subtree arguments, `unirepo` auto-detects changed subtrees. Use explicit subtree names when you want PRs for only part of the workspace.
+Opens one GitHub pull request per changed subtree repo. Without subtree arguments, `unirepo` auto-detects changed subtrees. Use explicit subtree names when you want PRs for only part of the workspace. By default, each PR head matches that subtree's effective push branch.
 
 
 | Flag | Effect |
@@ -228,7 +246,7 @@ Opens one GitHub pull request per changed subtree repo. Without subtree argument
 | `--title <title>` | Shared PR title for all selected repos |
 | `--body <text>` | Shared PR description |
 | `--base <name>` | Override the base branch for all selected repos |
-| `--head <name>` | Override the head branch name (default: current branch) |
+| `--head <name>` | Override the head branch name for all selected subtrees |
 | `--draft` | Create draft pull requests |
 | `--dry-run` | Show the `gh pr create` commands without executing |
 

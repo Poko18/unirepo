@@ -1,4 +1,11 @@
-import { git, getCurrentBranch, getSubtreePrefixes, getTrackedSubtreeBranch } from '../git.js';
+import {
+  git,
+  getConfiguredSubtreePushBranch,
+  getCurrentBranch,
+  getSubtreePrefixes,
+  getTrackedSubtreeBranch,
+  resolveSubtreePushBranch,
+} from '../git.js';
 import { validateInsideMonorepo } from '../validate.js';
 import * as ui from '../ui.js';
 
@@ -18,10 +25,16 @@ export async function runBranch({ name }) {
     ui.blank();
     for (const s of subtrees) {
       const upstream = getTrackedSubtreeBranch(cwd, s.name) || 'unknown';
-      ui.info(`  ${s.name}  upstream: ${upstream}  push target: ${currentBranch}`);
+      const configuredPushBranch = getConfiguredSubtreePushBranch(cwd, s.name);
+      const pushBranch = resolveSubtreePushBranch({
+        configuredBranch: configuredPushBranch,
+        currentBranch,
+      });
+      const suffix = configuredPushBranch ? ' (configured)' : '';
+      ui.info(`  ${s.name}  upstream: ${upstream}  push target: ${pushBranch}${suffix}`);
     }
     ui.blank();
-    ui.info('Use "unirepo branch <name>" to switch all subtrees to a new branch.');
+    ui.info('Use "unirepo branch <name>" to switch the workspace branch. Subtrees without a configured override use that branch by default.');
     ui.blank();
     return;
   }
@@ -41,7 +54,16 @@ export async function runBranch({ name }) {
   ui.blank();
 
   for (const s of subtrees) {
-    ui.success(`${s.name} → push will target "${name}" upstream`);
+    const configuredPushBranch = getConfiguredSubtreePushBranch(cwd, s.name);
+    const pushBranch = resolveSubtreePushBranch({
+      configuredBranch: configuredPushBranch,
+      currentBranch: name,
+    });
+    if (configuredPushBranch && configuredPushBranch !== name) {
+      ui.success(`${s.name} → push will target "${pushBranch}" upstream (configured override)`);
+    } else {
+      ui.success(`${s.name} → push will target "${pushBranch}" upstream`);
+    }
   }
 
   ui.blank();

@@ -1,29 +1,55 @@
-import { getCurrentBranch, getSubtreePrefixes, getChangedSubtrees, getTrackedSubtreeBranch } from '../git.js';
+import {
+  getConfiguredSubtreePushBranch,
+  getCurrentBranch,
+  getSubtreePrefixes,
+  getChangedSubtrees,
+  getTrackedSubtreeBranch,
+  resolveSubtreePushBranch,
+} from '../git.js';
 import { validateInsideMonorepo } from '../validate.js';
 import * as ui from '../ui.js';
+
+export function buildStatusSubtrees({
+  prefixes,
+  changedPrefixes,
+  currentBranch,
+  getTrackedBranchFn = () => null,
+  getConfiguredPushBranchFn = () => null,
+}) {
+  const changedNames = new Set(changedPrefixes.map((prefix) => prefix.name));
+
+  return prefixes.map((prefix) => ({
+    name: prefix.name,
+    url: prefix.url,
+    upstream: getTrackedBranchFn(prefix.name) || 'unknown',
+    pushBranch: resolveSubtreePushBranch({
+      configuredBranch: getConfiguredPushBranchFn(prefix.name),
+      currentBranch,
+    }),
+    changed: changedNames.has(prefix.name),
+  }));
+}
 
 export async function runStatus({ json }) {
   const cwd = process.cwd();
 
   validateInsideMonorepo(cwd);
 
-  const branch = getCurrentBranch(cwd);
+  const currentBranch = getCurrentBranch(cwd);
   const prefixes = getSubtreePrefixes(cwd);
   const changed = getChangedSubtrees(cwd);
-  const changedNames = new Set(changed.map((c) => c.name));
-
-  const subtrees = prefixes.map((p) => ({
-    name: p.name,
-    url: p.url,
-    upstream: getTrackedSubtreeBranch(cwd, p.name) || 'unknown',
-    pushBranch: branch,
-    changed: changedNames.has(p.name),
-  }));
+  const subtrees = buildStatusSubtrees({
+    prefixes,
+    changedPrefixes: changed,
+    currentBranch,
+    getTrackedBranchFn: (prefixName) => getTrackedSubtreeBranch(cwd, prefixName),
+    getConfiguredPushBranchFn: (prefixName) => getConfiguredSubtreePushBranch(cwd, prefixName),
+  });
 
   if (json) {
-    console.log(JSON.stringify({ pushBranch: branch, subtrees }, null, 2));
+    console.log(JSON.stringify({ workspaceBranch: currentBranch, subtrees }, null, 2));
     return;
   }
 
-  ui.subtreeTable(subtrees, branch);
+  ui.subtreeTable(subtrees, currentBranch);
 }

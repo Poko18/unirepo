@@ -78,7 +78,7 @@ export function subtreeTable(subtrees, currentBranch) {
   header('Monorepo Status');
   blank();
   console.log(`  ${ICON.folder} Subtrees: ${chalk.bold(subtrees.length)}`);
-  console.log(`  ${ICON.rocket} Push branch: ${chalk.bold.cyan(currentBranch)}`);
+  console.log(`  ${ICON.branch} Workspace branch: ${chalk.bold.cyan(currentBranch)}`);
   blank();
 
   if (subtrees.length === 0) {
@@ -90,7 +90,7 @@ export function subtreeTable(subtrees, currentBranch) {
   // Column widths
   const nameWidth = Math.max(12, ...subtrees.map((s) => s.name.length)) + 2;
   const upstreamWidth = Math.max(10, ...subtrees.map((s) => (s.upstream || '').length)) + 2;
-  const pushWidth = Math.max(12, currentBranch.length) + 2;
+  const pushWidth = Math.max(12, ...subtrees.map((s) => (s.pushBranch || currentBranch).length)) + 2;
   const urlWidth = Math.max(10, ...subtrees.map((s) => s.url.length)) + 2;
   const headerRow =
     'Subtree'.padEnd(nameWidth) +
@@ -107,7 +107,7 @@ export function subtreeTable(subtrees, currentBranch) {
       ? chalk.yellow('● yes')
       : chalk.dim('○ no');
     const upstreamStr = chalk.dim((s.upstream || 'unknown').padEnd(upstreamWidth));
-    const pushStr = chalk.cyan(currentBranch.padEnd(pushWidth));
+    const pushStr = chalk.cyan((s.pushBranch || currentBranch).padEnd(pushWidth));
     console.log(
       `  ${chalk.bold(s.name.padEnd(nameWidth))}${upstreamStr}${pushStr}${chalk.dim(s.url.padEnd(urlWidth))}${changed}`
     );
@@ -177,10 +177,10 @@ ${chalk.bold('Commands:')}
   ${chalk.green('init')} <dir> <repo-url...>    Create a new monorepo from repo URLs
   ${chalk.green('add')}  <repo-url>             Add a repo to the current monorepo
   ${chalk.green('pull')} [subtree...]            Pull subtree updates from upstream
-  ${chalk.green('status')}                      Show tracked subtrees and changes
+  ${chalk.green('status')}                      Show tracked subtrees, branches, and changes
   ${chalk.green('push')} [subtree...]            Push changed subtrees upstream
   ${chalk.green('pr')}   [subtree...]            Open PRs for changed subtree repos
-  ${chalk.green('branch')} [name]               Create a branch on all upstream repos
+  ${chalk.green('branch')} [name]               Create or show the workspace branch
   ${chalk.green('version')}                     Show the installed CLI version
 
 ${chalk.bold('Global options:')}
@@ -204,14 +204,14 @@ ${chalk.bold('Status options:')}
   --json                      Output machine-readable JSON
 
 ${chalk.bold('Push options:')}
-  --branch <name>             Branch name for upstream push (default: current)
+  --branch <name>             Branch name for all selected subtree pushes
   --dry-run                   Show commands without executing
 
 ${chalk.bold('PR options:')}
   --title <title>             Shared PR title (required)
   --body <text>               Shared PR description
   --base <name>               Override the base branch for all selected repos
-  --head <name>               Override the head branch (default: current branch)
+  --head <name>               Override the head branch for all selected repos
   --draft                     Create draft PRs
   --dry-run                   Show gh pr create commands without executing
 
@@ -232,8 +232,11 @@ ${chalk.bold('Examples:')}
   ${chalk.dim('# Check status')}
   npx unirepo status
 
-  ${chalk.dim('# Create a branch (used as target when pushing all subtrees)')}
+  ${chalk.dim('# Create the default workspace branch for subtree pushes')}
   npx unirepo branch feature-x
+
+  ${chalk.dim('# Override one subtree push/PR branch via local git config')}
+  git config unirepo.subtree.api.pushBranch feature-api
 
   ${chalk.dim('# Push changes upstream')}
   npx unirepo push --dry-run

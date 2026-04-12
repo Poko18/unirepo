@@ -10,6 +10,10 @@ function getSubtreeBranchConfigKey(prefixName) {
   return `unirepo.subtree.${prefixName}.branch`;
 }
 
+function getSubtreePushBranchConfigKey(prefixName) {
+  return `unirepo.subtree.${prefixName}.pushBranch`;
+}
+
 /**
  * Execute a git command and return trimmed stdout.
  * @param {string} args - git arguments
@@ -284,6 +288,35 @@ export function setConfiguredSubtreeBranch(cwd, prefixName, branch) {
     `config ${quoteShellArg(getSubtreeBranchConfigKey(prefixName))} ${quoteShellArg(branch)}`,
     { cwd, silent: true }
   );
+}
+
+/**
+ * Get the push/head branch explicitly configured for a subtree in local git config.
+ */
+export function getConfiguredSubtreePushBranch(cwd, prefixName) {
+  const branch = git(`config --get ${quoteShellArg(getSubtreePushBranchConfigKey(prefixName))}`, {
+    cwd,
+    silent: true,
+    allowFailure: true,
+  });
+  return branch || null;
+}
+
+/**
+ * Persist the push/head branch override for a subtree in local git config.
+ */
+export function setConfiguredSubtreePushBranch(cwd, prefixName, branch) {
+  git(
+    `config ${quoteShellArg(getSubtreePushBranchConfigKey(prefixName))} ${quoteShellArg(branch)}`,
+    { cwd, silent: true }
+  );
+}
+
+/**
+ * Resolve the effective push/head branch for a subtree.
+ */
+export function resolveSubtreePushBranch({ requestedBranch, configuredBranch, currentBranch }) {
+  return requestedBranch || configuredBranch || currentBranch;
 }
 
 /**
