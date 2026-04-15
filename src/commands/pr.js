@@ -1,6 +1,7 @@
 import {
   getConfiguredSubtreePushBranch,
   getCurrentBranch,
+  getMonorepoRoot,
   getSubtreePrefixes,
   getChangedSubtrees,
   getTrackedSubtreeBranch,
@@ -62,7 +63,7 @@ export function planPrTargets({
 }
 
 export async function runPr({ subtrees: requestedSubtrees, title, body, base, head, draft, dryRun }) {
-  const cwd = process.cwd();
+  const cwd = getMonorepoRoot(process.cwd());
 
   ui.header('Creating pull requests');
   ui.blank();

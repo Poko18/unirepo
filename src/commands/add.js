@@ -1,9 +1,9 @@
-import { git, detectDefaultBranch, extractRepoName, setConfiguredSubtreeBranch } from '../git.js';
+import { git, detectDefaultBranch, extractRepoName, getMonorepoRoot, setConfiguredSubtreeBranch } from '../git.js';
 import { validateGitSubtree, validateUrls, validateInsideMonorepo, validateNameAvailable, validateReachable } from '../validate.js';
 import * as ui from '../ui.js';
 
 export async function runAdd({ url, prefix, branch, fullHistory }) {
-  const cwd = process.cwd();
+  const cwd = getMonorepoRoot(process.cwd());
 
   // ── Preflight ────────────────────────────────────────────────────────────
   ui.header('Adding repository');

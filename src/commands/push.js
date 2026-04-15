@@ -2,16 +2,18 @@ import {
   git,
   getConfiguredSubtreePushBranch,
   getCurrentBranch,
+  getMonorepoRoot,
   getSubtreePrefixes,
   getChangedSubtrees,
   hasUncommittedChanges,
   resolveSubtreePushBranch,
+  setLastPushedRef,
 } from '../git.js';
 import { validateGitSubtree, validateInsideMonorepo } from '../validate.js';
 import * as ui from '../ui.js';
 
 export async function runPush({ subtrees: requestedSubtrees, branch, dryRun }) {
-  const cwd = process.cwd();
+  const cwd = getMonorepoRoot(process.cwd());
 
   // ── Preflight ────────────────────────────────────────────────────────────
   ui.header('Pushing subtrees');
@@ -92,6 +94,8 @@ export async function runPush({ subtrees: requestedSubtrees, branch, dryRun }) {
     ui.pushSlow();
     try {
       git(`subtree push --prefix="${target.name}" "${target.name}" "${target.pushBranch}"`, { cwd });
+      const headRef = git('rev-parse HEAD', { cwd, silent: true });
+      setLastPushedRef(cwd, target.name, headRef);
       ui.success(`${target.name} pushed`);
       succeeded++;
     } catch (err) {

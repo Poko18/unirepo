@@ -1,4 +1,4 @@
-import { git, getSubtreePrefixes, getTrackedSubtreeBranch, hasRemoteBranch, setConfiguredSubtreeBranch } from '../git.js';
+import { git, getMonorepoRoot, getSubtreePrefixes, getTrackedSubtreeBranch, hasRemoteBranch, setConfiguredSubtreeBranch } from '../git.js';
 import { validateGitSubtree, validateInsideMonorepo } from '../validate.js';
 import * as ui from '../ui.js';
 
@@ -49,7 +49,7 @@ export function resolvePullUpstreamBranch({ requestedBranch, trackedBranch }) {
 }
 
 export async function runPull({ subtrees: requestedSubtrees, branch, fullHistory }) {
-  const cwd = process.cwd();
+  const cwd = getMonorepoRoot(process.cwd());
 
   ui.header('Pulling subtrees');
   ui.blank();

@@ -1,6 +1,7 @@
 import {
   getConfiguredSubtreePushBranch,
   getCurrentBranch,
+  getMonorepoRoot,
   getSubtreePrefixes,
   getChangedSubtrees,
   getTrackedSubtreeBranch,
@@ -31,7 +32,7 @@ export function buildStatusSubtrees({
 }
 
 export async function runStatus({ json }) {
-  const cwd = process.cwd();
+  const cwd = getMonorepoRoot(process.cwd());
 
   validateInsideMonorepo(cwd);
 
