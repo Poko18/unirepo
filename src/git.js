@@ -14,6 +14,10 @@ function getSubtreePushBranchConfigKey(prefixName) {
   return `unirepo.subtree.${prefixName}.pushBranch`;
 }
 
+function getSubtreeLastPushedRefKey(prefixName) {
+  return `unirepo.subtree.${prefixName}.lastPushedRef`;
+}
+
 /**
  * Execute a git command and return trimmed stdout.
  * @param {string} args - git arguments
@@ -199,15 +203,15 @@ export function getChangedSubtrees(cwd) {
       continue;
     }
 
-    // Check 2: committed changes since the last subtree add/pull merge
+    // Check 2: committed changes since the last push (or last subtree merge as fallback)
     try {
-      const mergeCommit = findLastSubtreeMerge(cwd, prefix.name);
-      if (mergeCommit) {
-        // Are there any commits after the merge that touch this prefix?
-        const commits = execSync(
-          `git log --oneline "${mergeCommit}..HEAD" -- "${prefix.name}"`,
-          { cwd, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }
-        ).trim();
+      const lastPushedRef = getLastPushedRef(cwd, prefix.name);
+      const anchor = lastPushedRef || findLastSubtreeMerge(cwd, prefix.name);
+      if (anchor) {
+        const commits = git(
+          `log --oneline ${quoteShellArg(anchor + '..HEAD')} -- ${quoteShellArg(prefix.name)}`,
+          { cwd, silent: true, allowFailure: true }
+        );
         if (commits) {
           changed.push(prefix);
         }
@@ -310,6 +314,43 @@ export function setConfiguredSubtreePushBranch(cwd, prefixName, branch) {
     `config ${quoteShellArg(getSubtreePushBranchConfigKey(prefixName))} ${quoteShellArg(branch)}`,
     { cwd, silent: true }
   );
+}
+
+/**
+ * Get the SHA of the last HEAD that was successfully pushed for a subtree.
+ */
+export function getLastPushedRef(cwd, prefixName) {
+  return git(`config --get ${quoteShellArg(getSubtreeLastPushedRefKey(prefixName))}`, {
+    cwd,
+    silent: true,
+    allowFailure: true,
+  }) || null;
+}
+
+/**
+ * Persist the HEAD SHA that was last successfully pushed for a subtree.
+ */
+export function setLastPushedRef(cwd, prefixName, ref) {
+  git(
+    `config ${quoteShellArg(getSubtreeLastPushedRefKey(prefixName))} ${quoteShellArg(ref)}`,
+    { cwd, silent: true }
+  );
+}
+
+/**
+ * Resolve the root of the git work tree (the monorepo root), even when called
+ * from inside a subtree subdirectory.
+ */
+export function getMonorepoRoot(cwd) {
+  try {
+    return execSync('git rev-parse --show-toplevel', {
+      cwd,
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    }).trim();
+  } catch {
+    return cwd;
+  }
 }
 
 /**

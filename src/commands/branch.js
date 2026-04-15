@@ -2,6 +2,7 @@ import {
   git,
   getConfiguredSubtreePushBranch,
   getCurrentBranch,
+  getMonorepoRoot,
   getSubtreePrefixes,
   getTrackedSubtreeBranch,
   resolveSubtreePushBranch,
@@ -10,7 +11,7 @@ import { validateInsideMonorepo } from '../validate.js';
 import * as ui from '../ui.js';
 
 export async function runBranch({ name }) {
-  const cwd = process.cwd();
+  const cwd = getMonorepoRoot(process.cwd());
 
   validateInsideMonorepo(cwd);
 
