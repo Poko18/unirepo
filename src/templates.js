@@ -21,6 +21,12 @@ This repository is a git-subtree monorepo.
 
 ## CLI
 
+If \`unirepo\` is not installed, install it first:
+
+\`\`\`bash
+npm install -g unirepo-cli
+\`\`\`
+
 Preferred when the \`unirepo\` CLI is available:
 
 \`\`\`bash
@@ -67,10 +73,15 @@ git subtree pull --prefix=<subtree> <remote-or-url> <branch> --squash
 
 3. Make changes inside one or more subtree directories.
 
-4. Commit in the monorepo. Prefer one commit per subtree unless the change is intentionally coupled.
+4. Commit in the monorepo. Use one commit per subtree when the changes are independent. When a change is tightly coupled across subtrees (e.g. a shared type change that requires simultaneous updates in both the library and the consumer), commit all affected subtrees together in a single commit so the intent is clear.
 \`\`\`bash
+# Single subtree
 git add <subtree>/
 git commit -m "feat(<subtree>): ..."
+
+# Coupled change across subtrees
+git add <subtree-a>/ <subtree-b>/
+git commit -m "feat: ..."
 \`\`\`
 
 5. Inspect what changed before pushing.
@@ -136,4 +147,6 @@ export const GITIGNORE = `.DS_Store
 
 *.swp
 *.swo
+
+AGENTS.md
 `;
