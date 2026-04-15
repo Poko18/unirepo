@@ -1,6 +1,6 @@
 {
   "name": "unirepo-cli",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "CLI tool for creating and managing git-subtree monorepos — run your agents across repos",
   "type": "module",
   "bin": {
