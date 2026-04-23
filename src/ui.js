@@ -181,6 +181,7 @@ ${chalk.bold('Commands:')}
   ${chalk.green('push')} [subtree...]            Push changed subtrees upstream
   ${chalk.green('pr')}   [subtree...]            Open PRs for changed subtree repos
   ${chalk.green('branch')} [name]               Create or show the workspace branch
+  ${chalk.green('reset')} [subtree...]           Pull from upstream main and align all push branches
   ${chalk.green('version')}                     Show the installed CLI version
 
 ${chalk.bold('Global options:')}
@@ -205,6 +206,10 @@ ${chalk.bold('Status options:')}
 
 ${chalk.bold('Push options:')}
   --branch <name>             Branch name for all selected subtree pushes
+  --dry-run                   Show commands without executing
+
+${chalk.bold('Reset options:')}
+  --branch <name>             Branch to pull from and align push targets to (default: each subtree's upstream default)
   --dry-run                   Show commands without executing
 
 ${chalk.bold('PR options:')}
@@ -237,6 +242,9 @@ ${chalk.bold('Examples:')}
 
   ${chalk.dim('# Override one subtree push/PR branch via local git config')}
   git config unirepo.subtree.api.pushBranch feature-api
+
+  ${chalk.dim('# After merging a feature, reset all subtrees back to main')}
+  npx unirepo reset
 
   ${chalk.dim('# Push changes upstream')}
   npx unirepo push --dry-run

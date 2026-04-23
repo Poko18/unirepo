@@ -9,6 +9,7 @@ import { runStatus } from './commands/status.js';
 import { runPush } from './commands/push.js';
 import { runBranch } from './commands/branch.js';
 import { runPr } from './commands/pr.js';
+import { runReset } from './commands/reset.js';
 import { pathToFileURL } from 'node:url';
 import { realpathSync } from 'node:fs';
 
@@ -73,6 +74,7 @@ const COMMAND_USAGE = {
   push: 'Usage: unirepo push [subtree...] [--branch <name>] [--dry-run]',
   branch: 'Usage: unirepo branch [name]',
   pr: 'Usage: unirepo pr [subtree...] --title <title> [--body <text>] [--base <name>] [--head <name>] [--draft] [--dry-run]',
+  reset: 'Usage: unirepo reset [subtree...] [--branch <name>] [--dry-run]',
 };
 
 const COMMAND_FLAGS = {
@@ -84,6 +86,7 @@ const COMMAND_FLAGS = {
   push: new Set(['branch', 'dryRun']),
   branch: new Set(),
   pr: new Set(['title', 'body', 'base', 'head', 'draft', 'dryRun']),
+  reset: new Set(['branch', 'dryRun']),
 };
 
 const FLAG_NAMES = {
@@ -222,6 +225,15 @@ export async function main() {
         base: flags.base,
         head: flags.head,
         draft: flags.draft || false,
+        dryRun: flags.dryRun || false,
+      });
+      break;
+    }
+
+    case 'reset': {
+      await runReset({
+        subtrees: positional.length > 0 ? positional : undefined,
+        branch: flags.branch,
         dryRun: flags.dryRun || false,
       });
       break;

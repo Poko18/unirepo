@@ -317,6 +317,17 @@ export function setConfiguredSubtreePushBranch(cwd, prefixName, branch) {
 }
 
 /**
+ * Remove the push/head branch override for a subtree from local git config.
+ */
+export function unsetConfiguredSubtreePushBranch(cwd, prefixName) {
+  git(`config --unset ${quoteShellArg(getSubtreePushBranchConfigKey(prefixName))}`, {
+    cwd,
+    silent: true,
+    allowFailure: true,
+  });
+}
+
+/**
  * Get the SHA of the last HEAD that was successfully pushed for a subtree.
  */
 export function getLastPushedRef(cwd, prefixName) {
